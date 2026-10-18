@@ -1,0 +1,24 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["AGENTS.md"],
+  "permission": {
+    "edit": "allow",
+    "bash": "ask",
+    "webfetch": "deny"
+  },
+  "mcp": {
+    // Playwright para revision visual y de accesibilidad del frontend.
+    // Mismo pin que la config global (@playwright/mcp@0.0.83); npx.cmd en
+    // vez de "npx" porque el shell de opencode en Windows no resuelve .cmd.
+    "playwright": {
+      "type": "local",
+      "command": [
+        "C:/Program Files/nodejs/npx.cmd",
+        "-y",
+        "@playwright/mcp@0.0.83"
+      ],
+      "enabled": true,
+      "timeout": 30000
+    }
+  }
+}

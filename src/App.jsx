@@ -8,8 +8,8 @@ import { Login } from './pages/Login.jsx'
 import { NoEncontrado } from './pages/NoEncontrado.jsx'
 import { Trabajos, DetalleTrabajo, FormularioTrabajo, EditarTrabajo, MisPostulaciones } from './pages/Trabajos.jsx'
 import { Panel } from './pages/Panel.jsx'
-import { SeccionPendiente } from './pages/SeccionPendiente.jsx'
 import { CierreYHoras, HistorialBecario } from './pages/Control.jsx'
+import { AdminSupervision } from './pages/AdminSupervision.jsx'
 
 /**
  * Rutas de MiBeca. El shell y sus páginas exigen sesión; el login y el cambio
@@ -45,7 +45,7 @@ function App() {
             <Route path="/postulaciones" element={<ProtectedRoute roles={['ENCARGADO']}><Trabajos modo="postulantes" /></ProtectedRoute>} />
             <Route path="/cierre-y-horas" element={<ProtectedRoute roles={['ENCARGADO']}><CierreYHoras /></ProtectedRoute>} />
             <Route path="/admin/trabajos" element={<ProtectedRoute roles={['ADMIN']}><Trabajos modo="admin" /></ProtectedRoute>} />
-            <Route path="/admin/supervision" element={<SeccionPendiente />} />
+            <Route path="/admin/supervision" element={<ProtectedRoute roles={['ADMIN']}><AdminSupervision /></ProtectedRoute>} />
           </Route>
 
           <Route path="/404" element={<NoEncontrado />} />

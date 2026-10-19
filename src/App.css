@@ -138,6 +138,11 @@ td { border-bottom: 1px solid var(--border); }
 @media (max-width: 640px) { .metrics--progress, .history-facts { grid-template-columns: 1fr; } }
 
 .app-shell, .sidebar, .main-column { min-width: 0; }
+.metrics--summary { grid-template-columns: repeat(4, minmax(0, 1fr)); margin: var(--space-5) 0; }
+.table-subtext { display: block; margin-top: var(--space-1); color: var(--text-muted); font-weight: 400; }
+tr th, tr td { padding: var(--space-3) var(--space-4); vertical-align: top; }
+@media (max-width: 900px) { .metrics--summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .metrics--summary { grid-template-columns: 1fr; } }
 @media (max-width: 900px) {
   .app-shell { grid-template-columns: minmax(0, 1fr); }
   .sidebar nav { min-width: 0; max-width: 100%; }

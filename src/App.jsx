@@ -6,6 +6,7 @@ import { AdminUsuarios } from './pages/AdminUsuarios.jsx'
 import { ChangePassword } from './pages/ChangePassword.jsx'
 import { Login } from './pages/Login.jsx'
 import { NoEncontrado } from './pages/NoEncontrado.jsx'
+import { Trabajos, DetalleTrabajo, FormularioTrabajo, EditarTrabajo, MisPostulaciones } from './pages/Trabajos.jsx'
 import { Panel } from './pages/Panel.jsx'
 import { SeccionPendiente } from './pages/SeccionPendiente.jsx'
 
@@ -33,13 +34,16 @@ function App() {
               path="/admin/usuarios"
               element={<ProtectedRoute roles={['ADMIN']}><AdminUsuarios /></ProtectedRoute>}
             />
-            <Route path="/trabajos-disponibles" element={<SeccionPendiente />} />
-            <Route path="/mis-postulaciones" element={<SeccionPendiente />} />
-            <Route path="/historial" element={<SeccionPendiente />} />
-            <Route path="/mis-trabajos" element={<SeccionPendiente />} />
-            <Route path="/postulaciones" element={<SeccionPendiente />} />
+            <Route path="/trabajos-disponibles" element={<ProtectedRoute roles={['BECARIO']}><Trabajos /></ProtectedRoute>} />
+            <Route path="/mis-postulaciones" element={<ProtectedRoute roles={['BECARIO']}><MisPostulaciones /></ProtectedRoute>} />
+            <Route path="/trabajos/:id" element={<DetalleTrabajo />} />
+<Route path="/mis-trabajos/nuevo" element={<ProtectedRoute roles={['ENCARGADO']}><FormularioTrabajo /></ProtectedRoute>} />
+<Route path="/mis-trabajos/:id/editar" element={<ProtectedRoute roles={['ENCARGADO']}><EditarTrabajo /></ProtectedRoute>} />
+<Route path="/historial" element={<SeccionPendiente />} />
+            <Route path="/mis-trabajos" element={<ProtectedRoute roles={['ENCARGADO']}><Trabajos modo="propios" /></ProtectedRoute>} />
+            <Route path="/postulaciones" element={<ProtectedRoute roles={['ENCARGADO']}><Trabajos modo="postulantes" /></ProtectedRoute>} />
             <Route path="/cierre-y-horas" element={<SeccionPendiente />} />
-            <Route path="/admin/trabajos" element={<SeccionPendiente />} />
+            <Route path="/admin/trabajos" element={<ProtectedRoute roles={['ADMIN']}><Trabajos modo="admin" /></ProtectedRoute>} />
             <Route path="/admin/supervision" element={<SeccionPendiente />} />
           </Route>
 

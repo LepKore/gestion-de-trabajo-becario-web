@@ -1,6 +1,6 @@
 # MiBeca · frontend
 
-Aplicación React 19 y Vite para la plataforma de gestión de trabajo becario. Inicia sesión contra la API, aplica el cambio obligatorio de contraseña, navega por rutas según el rol y permite al administrador dar de alta, desactivar y restablecer cuentas. La autorización final la hace el backend. Las secciones de trabajos, postulaciones y control (fases 3 y 4) siguen mostrándose como estados vacíos.
+Aplicación React 19 y Vite para la plataforma de gestión de trabajo becario. Inicia sesión contra la API, aplica el cambio obligatorio de contraseña, navega por rutas según el rol, permite administrar cuentas y cubre trabajos, postulaciones, control e historial, paneles por rol y supervisión administrativa. La autorización final la hace el backend.
 
 ## Desarrollo local
 
@@ -8,12 +8,15 @@ Aplicación React 19 y Vite para la plataforma de gestión de trabajo becario. I
 npm ci
 npm run dev
 npm run lint
+npm test
 npm run build
 ```
 
-Firebase Hosting ya está configurado para publicar `dist`; su configuración y workflows no se modificaron en este trabajo. El workflow de PR genera una vista previa y el de `main` publica en el canal live. En ambos casos se compila; actualmente no ejecutan lint ni pruebas. Una publicación del frontend no podrá consultar el backend local de un integrante: antes de conectar datos reales habrá que disponer de una URL pública de API y configurar CORS en el backend.
+Firebase Hosting publica `dist`; los workflows conservan vista previa en PR y publicación live desde `main`. Antes de cada deploy ejecutan `npm ci`, lint, pruebas, build y una comprobación de salud de API. La CI de frontend también valida PR y las ramas `main`, `dev` y `sergio`. Define la variable pública de repositorio `VITE_API_URL` con el formato `https://api.midominio.edu/api/v1`; el workflow detiene el despliegue si falta o si `/ready` no responde. CORS del backend debe permitir el origen web exacto.
 
-El 18-10-2026 `npm run lint` y `npm run build` finalizaron correctamente en local. Esto no verifica el despliegue Firebase ni un flujo conectado al backend. El 19-10-2026 se repitieron lint y build tras integrar la autenticación, y el recorrido completo se comprobó en navegador contra el backend local.
+Para usar cookies de sesión en producción, el frontend y la API deben compartir un dominio de sitio configurado, CORS debe permitir el origen exacto y el backend debe usar `SESSION_SAME_SITE=none` junto con `COOKIE_SECURE=true` si la topología es cross-site. Firebase `web.app` y Supabase `supabase.co` son sitios distintos; políticas del navegador pueden bloquear cookies de terceros aunque SameSite y CORS estén configurados. No se declara autenticación de producción hasta verificarla con los dominios reales.
+
+La verificación local y los límites de operación de fase 6 están en [docs/VERIFICACION_FASE_6.md](docs/VERIFICACION_FASE_6.md). No se despliega automáticamente desde `dev` ni desde `sergio`.
 
 ## Build y arranque en despliegue
 

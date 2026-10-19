@@ -68,19 +68,48 @@ export function Dialog({ titulo, descripcion, onCerrar, children }) {
   const tituloId = useId()
   const descripcionId = useId()
   const refDialogo = useRef(null)
+  const cerrarRef = useRef(onCerrar)
+
+  useEffect(() => {
+    cerrarRef.current = onCerrar
+  }, [onCerrar])
 
   useEffect(() => {
     const anterior = document.activeElement
     refDialogo.current?.focus()
     function alPulsar(event) {
-      if (event.key === 'Escape') onCerrar()
+      if (event.key === 'Escape') {
+        cerrarRef.current()
+        return
+      }
+      if (event.key !== 'Tab') return
+
+      const dialogo = refDialogo.current
+      const controles = dialogo?.querySelectorAll(
+        'a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',
+      )
+      if (!dialogo || !controles?.length) {
+        event.preventDefault()
+        dialogo?.focus()
+        return
+      }
+
+      const primero = controles[0]
+      const ultimo = controles[controles.length - 1]
+      if (event.shiftKey && (document.activeElement === primero || document.activeElement === dialogo)) {
+        event.preventDefault()
+        ultimo.focus()
+      } else if (!event.shiftKey && (document.activeElement === ultimo || document.activeElement === dialogo)) {
+        event.preventDefault()
+        primero.focus()
+      }
     }
     document.addEventListener('keydown', alPulsar)
     return () => {
       document.removeEventListener('keydown', alPulsar)
       if (anterior instanceof HTMLElement) anterior.focus()
     }
-  }, [onCerrar])
+  }, [])
 
   // El portal mantiene el HTML válido aunque el diálogo se abra desde una fila
   // de tabla y evita que el apilado del shell oculte el fondo.

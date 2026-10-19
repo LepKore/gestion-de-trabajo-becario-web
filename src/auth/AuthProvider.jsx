@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
     guardarCsrfToken(null)
     setUsuario(null)
     setRequiereCambioPassword(false)
-    setEstado(ESTADOS.Anonimo)
+    setEstado(ESTADOS.anonimo)
   }, [])
 
   const recuperarSesion = useCallback(async () => {

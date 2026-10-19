@@ -3,7 +3,7 @@ name: Frontend CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, dev, sergio]
 
 permissions:
   contents: read

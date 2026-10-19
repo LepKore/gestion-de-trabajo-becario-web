@@ -1,5 +1,6 @@
 import { useAuth } from '../auth/useAuth.js'
 import { Metric } from '../components/ui.jsx'
+import { ProgresoBecario } from './Control.jsx'
 
 /** Resumen por rol. En esta fase solo muestra datos del propio usuario. */
 export function Panel() {
@@ -21,6 +22,7 @@ export function Panel() {
         <Metric label="Contraseña" value={usuario.requiereCambioPassword ? 'Temporal' : 'Definida'} tone={usuario.requiereCambioPassword ? 'warning' : 'success'} hint={usuario.requiereCambioPassword ? 'Debes cambiarla para usar el sistema.' : 'No requiere cambios.'} />
         {perfil && <Metric label={usuario.estudiante ? 'Meta semestral' : 'Contexto'} value={usuario.estudiante ? `${metaSemestralHoras} h` : usuario.encargado.contextoTipo} hint={usuario.estudiante ? `${contexto} · Las horas se acumulan al cerrar trabajos.` : contexto} />}
       </div>
+      {usuario.rol === 'BECARIO' && <ProgresoBecario />}
       <section className="panel">
         <header className="panel-head">
           <h2>Tu cuenta</h2>

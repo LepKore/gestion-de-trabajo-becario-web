@@ -1,6 +1,5 @@
 // Navegación por rol. Cada sección apunta a una ruta real: el menú ya no es una
-// vista preliminar sin backend. Las secciones de las fases 3 y 4 muestran su
-// estado vacío hasta que exista su API.
+// vista preliminar sin backend. La supervisión administrativa se habilita en la fase 5.
 export const SECCIONES = [
   { ruta: '/', etiqueta: 'Resumen', roles: ['ADMIN', 'ENCARGADO', 'BECARIO'] },
   { ruta: '/trabajos-disponibles', etiqueta: 'Trabajos disponibles', roles: ['BECARIO'] },

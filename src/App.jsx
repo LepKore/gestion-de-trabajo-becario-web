@@ -9,6 +9,7 @@ import { NoEncontrado } from './pages/NoEncontrado.jsx'
 import { Trabajos, DetalleTrabajo, FormularioTrabajo, EditarTrabajo, MisPostulaciones } from './pages/Trabajos.jsx'
 import { Panel } from './pages/Panel.jsx'
 import { SeccionPendiente } from './pages/SeccionPendiente.jsx'
+import { CierreYHoras, HistorialBecario } from './pages/Control.jsx'
 
 /**
  * Rutas de MiBeca. El shell y sus páginas exigen sesión; el login y el cambio
@@ -39,10 +40,10 @@ function App() {
             <Route path="/trabajos/:id" element={<DetalleTrabajo />} />
 <Route path="/mis-trabajos/nuevo" element={<ProtectedRoute roles={['ENCARGADO']}><FormularioTrabajo /></ProtectedRoute>} />
 <Route path="/mis-trabajos/:id/editar" element={<ProtectedRoute roles={['ENCARGADO']}><EditarTrabajo /></ProtectedRoute>} />
-<Route path="/historial" element={<SeccionPendiente />} />
+<Route path="/historial" element={<ProtectedRoute roles={['BECARIO']}><HistorialBecario /></ProtectedRoute>} />
             <Route path="/mis-trabajos" element={<ProtectedRoute roles={['ENCARGADO']}><Trabajos modo="propios" /></ProtectedRoute>} />
             <Route path="/postulaciones" element={<ProtectedRoute roles={['ENCARGADO']}><Trabajos modo="postulantes" /></ProtectedRoute>} />
-            <Route path="/cierre-y-horas" element={<SeccionPendiente />} />
+            <Route path="/cierre-y-horas" element={<ProtectedRoute roles={['ENCARGADO']}><CierreYHoras /></ProtectedRoute>} />
             <Route path="/admin/trabajos" element={<ProtectedRoute roles={['ADMIN']}><Trabajos modo="admin" /></ProtectedRoute>} />
             <Route path="/admin/supervision" element={<SeccionPendiente />} />
           </Route>

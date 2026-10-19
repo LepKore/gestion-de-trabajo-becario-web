@@ -3,8 +3,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth.js'
 import { apiRequest } from '../lib/api.js'
 import { useRecurso } from '../lib/useRecurso.js'
-import { fechaUTC, fechaVisible, horasAMinutos, ZONA_UNIVERSITARIA } from '../lib/trabajos.js'
+import { fechaFormulario, fechaUTC, fechaVisible, horasAMinutos, ZONA_UNIVERSITARIA } from '../lib/trabajos.js'
 import { Alert, EmptyState, Field } from '../components/ui.jsx'
+import { AsistenciaCerrada, FormularioCierre } from './Control.jsx'
 
 function Paginacion({ meta, cambiar }) {
   if (!meta || meta.totalPages <= 1) return null
@@ -81,6 +82,8 @@ function DetalleContenido({ trabajo, recargar }) {
       {usuario.rol === 'BECARIO' && <><button className="button button--primary" disabled={ocupado || postulado || !proximo || trabajo.cuposDisponibles <= 0} onClick={postular}>{ocupado ? 'Enviando…' : 'Postularme'}</button> <Link to="/mis-postulaciones">Mis postulaciones</Link></>}
       {propio && (proximo && trabajo.aceptados === 0 ? <Link className="button button--secondary" to={`/mis-trabajos/${trabajo.id}/editar`}>Editar trabajo</Link> : <p>Las condiciones solo se pueden editar antes del inicio y antes de la primera aceptación.</p>)}
     </section>
+    {propio && trabajo.estado === 'PUBLICADO' && trabajo.faseTemporal === 'FINALIZADO' && <FormularioCierre trabajo={trabajo} actualizarTrabajo={recargar} />}
+    {propio && trabajo.estado === 'CERRADO' && <AsistenciaCerrada trabajoId={trabajo.id} />}
     {propio && <Postulantes trabajo={trabajo} actualizarTrabajo={recargar} />}
   </>
 }
@@ -143,7 +146,7 @@ export function FormularioTrabajo({ trabajo }) {
     const valores = Object.fromEntries(new FormData(evento.currentTarget))
     let cuerpo
     try {
-      cuerpo = { titulo: valores.titulo.trim(), descripcion: valores.descripcion.trim(), ubicacion: valores.ubicacion.trim(), inicioPrevisto: fechaUTC(valores.inicioPrevisto), finPrevisto: fechaUTC(valores.finPrevisto), duracionMinutos: horasAMinutos(valores.horas), cupos: Number(valores.cupos) }
+      cuerpo = { titulo: valores.titulo.trim(), descripcion: valores.descripcion.trim(), ubicacion: valores.ubicacion.trim(), inicioPrevisto: fechaUTC(valores.inicioPrevisto, ZONA_UNIVERSITARIA, trabajo?.inicioPrevisto), finPrevisto: fechaUTC(valores.finPrevisto, ZONA_UNIVERSITARIA, trabajo?.finPrevisto), duracionMinutos: horasAMinutos(valores.horas), cupos: Number(valores.cupos) }
       if (new Date(cuerpo.inicioPrevisto).getTime() <= Date.now()) throw new Error('El inicio debe estar en el futuro.')
       if (cuerpo.finPrevisto <= cuerpo.inicioPrevisto) throw new Error('El fin debe ser posterior al inicio.')
       if (!Number.isSafeInteger(cuerpo.cupos) || cuerpo.cupos < 1) throw new Error('Los cupos deben ser un entero positivo.')
@@ -154,15 +157,15 @@ export function FormularioTrabajo({ trabajo }) {
       navegar(`/trabajos/${respuesta.data.id}`)
     } catch (fallo) { setError(fallo.message); setOcupado(false) }
   }
-  return <section className="panel"><h2>{trabajo ? 'Editar trabajo' : 'Publicar trabajo'}</h2><p>Introduce las fechas en UTC. Al consultar se muestran en {ZONA_UNIVERSITARIA}. La duración acreditable es independiente del intervalo de fechas.</p>
+  return <section className="panel"><h2>{trabajo ? 'Editar trabajo' : 'Publicar trabajo'}</h2><p>Introduce las fechas en la hora de {ZONA_UNIVERSITARIA}; la conversión a UTC se realiza automáticamente. La duración acreditable es independiente del intervalo de fechas.</p>
     {error && <Alert tipo="error">{error}</Alert>}
     <form onSubmit={guardar}><fieldset disabled={ocupado} style={{ border: 0, padding: 0, minWidth: 0 }}><legend>Condiciones del trabajo</legend><div className="form-grid">
       <Field label="Título" name="titulo" required maxLength={200} defaultValue={trabajo?.titulo || ''} />
       <Field label="Ubicación" name="ubicacion" required maxLength={300} defaultValue={trabajo?.ubicacion || ''} />
       <Field label="Descripción">{(props) => <textarea {...props} name="descripcion" required maxLength={5000} rows={4} defaultValue={trabajo?.descripcion || ''} />}</Field>
       <Field label="Duración acreditable (horas)" name="horas" inputMode="decimal" required hint="Máximo un decimal: 4,6 horas equivale a 276 minutos." defaultValue={trabajo ? String(trabajo.duracionMinutos / 60) : ''} />
-      <Field label="Inicio previsto (UTC)" name="inicioPrevisto" type="datetime-local" required defaultValue={trabajo ? new Date(trabajo.inicioPrevisto).toISOString().slice(0, 16) : ''} />
-      <Field label="Fin previsto (UTC)" name="finPrevisto" type="datetime-local" required defaultValue={trabajo ? new Date(trabajo.finPrevisto).toISOString().slice(0, 16) : ''} />
+      <Field label={'Inicio previsto (' + ZONA_UNIVERSITARIA + ')'} name="inicioPrevisto" type="datetime-local" required defaultValue={trabajo ? fechaFormulario(trabajo.inicioPrevisto) : ''} />
+      <Field label={'Fin previsto (' + ZONA_UNIVERSITARIA + ')'} name="finPrevisto" type="datetime-local" required defaultValue={trabajo ? fechaFormulario(trabajo.finPrevisto) : ''} />
       <Field label="Cupos" name="cupos" type="number" min="1" step="1" required defaultValue={trabajo?.cupos || ''} />
     </div><div className="row-actions"><button className="button button--primary" type="submit">{ocupado ? 'Guardando…' : trabajo ? 'Guardar cambios' : 'Publicar trabajo'}</button><Link to={trabajo ? `/trabajos/${trabajo.id}` : '/mis-trabajos'}>Cancelar</Link></div></fieldset></form>
   </section>

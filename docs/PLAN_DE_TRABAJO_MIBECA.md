@@ -1,6 +1,6 @@
 # MiBeca — Plan de trabajo por fases
 
-**Versión 1.0 — 18 de octubre de 2026.** Guía de ejecución por fases para la primera entrega.
+**Versión 1.1 — 19 de octubre de 2026.** Guía de ejecución por fases para la primera entrega. La numeración coincide con `PLAN_MVP_MIBECA.md`.
 
 Este archivo se conserva por separado del plan general `PLAN_MVP_MIBECA.md`: organiza las tareas y sus criterios de aceptación sin reemplazar ese documento. Si surge una diferencia de alcance, resolverla y sincronizar ambos antes de implementar.
 
@@ -63,7 +63,7 @@ Incluye Auth, Usuarios, Trabajos y Control, más una consulta administrativa bá
 
 1. Crear `openapi.yaml` canónico en backend antes de implementar rutas de negocio y validarlo en CI. Frontend referencia commit/tag y usa mocks compatibles mientras se implementa la API.
 2. Convenciones: `/api/v1`, JSON, UUID, UTC, duraciones en minutos, respuesta `data`, errores `code/message`, paginación con máximo 50 y respuestas 400/401/403/404/409 según caso. No devolver secretos ni trazas.
-3. Definir una única migración inicial del dominio y un único sistema de migraciones; no superponer Prisma e historial SQL propio.
+3. Mantener una migración inicial y ampliaciones aditivas en un único historial SQL; no superponer Prisma e historial SQL propio ni editar migraciones ya aplicadas.
 4. Crear las entidades mínimas:
 
 | Entidad | Campos y restricciones |
@@ -100,7 +100,7 @@ Incluye Auth, Usuarios, Trabajos y Control, más una consulta administrativa bá
 
 **Aceptación:** administrador crea estudiante y encargado, ambos acceden y cambian contraseña; permisos y revocación funcionan en API y UI.
 
-**Estado (19-10-2026): completada.** Los siete puntos están implementados en backend y frontend, con 25 pruebas de API, lint y build en verde y recorrido verificado en navegador. Evidencia en `../gestion-de-trabajo-becario-backend/docs/VERIFICACION_FASE_2.md`. Pendiente de fases posteriores: nada de esta fase queda abierto salvo el despliegue, que no se ha ejecutado.
+**Estado (19-10-2026): completada.** Los siete puntos están implementados en backend y frontend, con 25 pruebas de API, lint y build en verde y recorrido verificado en navegador. Evidencia en `docs/VERIFICACION_FASE_2.md`. Pendiente de fases posteriores: nada de esta fase queda abierto salvo el despliegue, que no se ha ejecutado.
 
 ## Fase 3 — Trabajos y postulaciones
 
@@ -120,6 +120,8 @@ Incluye Auth, Usuarios, Trabajos y Control, más una consulta administrativa bá
 
 **Aceptación:** flujo real de postulación/aceptación; dos aceptaciones concurrentes sobre el último cupo no generan sobrecupo.
 
+**Estado (19-10-2026): implementada en ambos repositorios.** OpenAPI 1.1.0 incorporó trabajos y postulaciones; la revisión 1.2.0 conserva sus rutas. La suite actual prueba cupos concurrentes, decisiones irreversibles, propiedad, actividad y condiciones de edición.
+
 ## Fase 4 — Control: cierre, asistencia y horas
 
 1. `POST /jobs/{id}/close` solo para propietario activo, desde el fin previsto según reloj del servidor.
@@ -134,6 +136,8 @@ Incluye Auth, Usuarios, Trabajos y Control, más una consulta administrativa bá
 10. Encargado consulta historial y asistencia solo de sus trabajos; frontend exige marcar explícitamente asistencia o ausencia antes del cierre.
 
 **Aceptación:** cierre atómico e irrepetible; ambos historiales conservan asistencia y las horas coinciden con los asistentes.
+
+**Estado (19-10-2026): completada y verificada en local.** Backend: cierre transaccional, asistencia, auditoría, progreso e historiales bajo OpenAPI 1.2.0; migración `0003_cierre_asistencia.sql` aplicada en `mibeca_dev` local. Verificación: 42 pruebas backend, 14 frontend, lint/build y contrato válidos, recorrido real en Chromium de cierre y progreso/historial con asistencia y ausencia, incluido móvil. Evidencia y límites en `VERIFICACION_FASE_4.md` del backend. Las consultas administrativas y dashboards restantes corresponden a fase 5; CI remota y publicación a fase 6.
 
 ## Fase 5 — Dashboards y consulta administrativa básica
 
@@ -164,8 +168,8 @@ Incluye Auth, Usuarios, Trabajos y Control, más una consulta administrativa bá
 2. Frontend: verificar flujos críticos contra API real, sesión expirada, validaciones, errores, accesibilidad y compilación/lint. No declarar completo un flujo con mocks.
 3. CI backend con lockfile, instalación reproducible, contrato y pruebas pertinentes con PostgreSQL efímero; nunca base de otro proyecto. CI frontend con lint/build y pruebas disponibles antes de publicar.
 4. Conservar workflows Firebase existentes: preview en PR y live desde main según configuración comprobada. No regenerar cuenta de servicio o secretos sin necesidad.
-5. Render futuro: crear base exclusiva MiBeca, servicio backend, DATABASE_URL/secrets, puerto de entorno y migraciones en paso controlado sin carreras entre instancias. Despliegue condicionado a CI.
-6. Firebase y Render en dominios distintos: comprobar sesiones en navegador. SameSite=None; Secure y CORS no garantizan aceptación de cookies de terceros; resolver dominio/ruta antes de declarar producción funcional. No desactivar globalmente verificación TLS.
+5. Supabase (destino principal): crear proyecto exclusivo MiBeca, servicio backend, `DATABASE_URL` del pooler en modo transacción (puerto 6543), `DB_SSL_MODE=require`, `DB_POOL_MAX` bajo, puerto de entorno y migraciones con `MIGRATION_TARGET=supabase` y `MIGRATION_CONFIRM_HOST` en paso controlado sin carreras entre instancias. Render queda como alternativa. Despliegue condicionado a CI.
+6. Firebase y el backend en dominios distintos: comprobar sesiones en navegador. SameSite=None; Secure y CORS no garantizan aceptación de cookies de terceros; resolver dominio/ruta antes de declarar producción funcional. No desactivar globalmente verificación TLS.
 7. Cambiar DATABASE_URL no copia registros ni crea tablas: ejecutar migraciones explícitas y decidir transferencia de datos por separado. Actualizar URL pública API del frontend y recompilar/publicar.
 8. Documentar instalación, comandos, admin inicial, variables, pruebas, límites, respaldo y recuperación. No prometer rollback automático de migraciones destructivas.
 9. Desarrollo autorizado no implica push/merge/despliegue. Cuando el equipo autorice integración a main bajo el flujo establecido, eso autoriza su despliegue automático sin otra confirmación de chat.

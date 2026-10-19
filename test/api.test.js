@@ -51,3 +51,22 @@ describe('cliente API', () => {
     })
   })
 })
+
+it('envía la clave de idempotencia en el cierre', async () => {
+  guardarCsrfToken('csrf-de-prueba')
+  const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{"data":{}}', { status: 200 }))
+  await apiRequest('/jobs/job/close', {
+    metodo: 'POST',
+    cuerpo: { attendance: [] },
+    idempotencyKey: 'cierre-prueba-123',
+  })
+  expect(fetchMock).toHaveBeenCalledWith(
+    expect.stringContaining('/api/v1/jobs/job/close'),
+    expect.objectContaining({ headers: expect.objectContaining({
+      'X-CSRF-Token': 'csrf-de-prueba',
+      'Idempotency-Key': 'cierre-prueba-123',
+    }) }),
+  )
+  fetchMock.mockRestore()
+  guardarCsrfToken(null)
+})

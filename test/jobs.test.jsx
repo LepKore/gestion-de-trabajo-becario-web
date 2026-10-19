@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { apiRequest } from '../src/lib/api.js'
-import { horasAMinutos } from '../src/lib/trabajos.js'
+import { fechaUTC, horasAMinutos } from '../src/lib/trabajos.js'
+import * as fechas from '../src/lib/trabajos.js'
 import { DetalleTrabajo, FormularioTrabajo, Trabajos } from '../src/pages/Trabajos.jsx'
 
 vi.mock('../src/lib/api.js', () => ({ apiRequest: vi.fn() }))
@@ -20,12 +21,12 @@ describe('Duración exacta', () => {
     for (const valor of ['3.61', '0', '-1', '1e2', 'Infinity']) expect(() => horasAMinutos(valor)).toThrow()
   })
 })
-it('publica convirtiendo horas y fechas UTC', async () => {
+it('publica convirtiendo horas y fechas de Bolivia a UTC', async () => {
   apiRequest.mockResolvedValue({ data: trabajo })
   montar(<FormularioTrabajo />)
-  for (const [label, value] of [['Título', 'Apoyo biblioteca'], ['Descripción', 'Ordenar libros'], ['Ubicación', 'Biblioteca'], ['Inicio previsto (UTC)', '2099-10-20T12:00'], ['Fin previsto (UTC)', '2099-10-20T18:00'], ['Duración acreditable (horas)', '4,6'], ['Cupos', '1']]) fireEvent.change(screen.getByLabelText(label), { target: { value } })
+  for (const [label, value] of [['Título', 'Apoyo biblioteca'], ['Descripción', 'Ordenar libros'], ['Ubicación', 'Biblioteca'], ['Inicio previsto (America/La_Paz)', '2099-10-20T12:00'], ['Fin previsto (America/La_Paz)', '2099-10-20T18:00'], ['Duración acreditable (horas)', '4,6'], ['Cupos', '1']]) fireEvent.change(screen.getByLabelText(label), { target: { value } })
   fireEvent.click(screen.getByRole('button', { name: 'Publicar trabajo' }))
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('/jobs', expect.objectContaining({ metodo: 'POST', cuerpo: expect.objectContaining({ duracionMinutos: 276, inicioPrevisto: '2099-10-20T12:00:00.000Z' }) })))
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('/jobs', expect.objectContaining({ metodo: 'POST', cuerpo: expect.objectContaining({ duracionMinutos: 276, inicioPrevisto: '2099-10-20T16:00:00.000Z' }) })))
 })
 it('pagina trabajos y muestra el fallo del servidor', async () => {
   apiRequest.mockResolvedValueOnce(lista([trabajo], 1, 2)).mockRejectedValueOnce(new Error('Sin conexión'))
@@ -65,4 +66,48 @@ it('administrador consulta sin acciones ni datos de postulantes', async () => {
   expect(screen.queryByRole('button', { name: 'Postularme' })).not.toBeInTheDocument()
   expect(screen.queryByRole('link', { name: 'Editar trabajo' })).not.toBeInTheDocument()
   expect(apiRequest).toHaveBeenCalledTimes(1)
+})
+
+it('convierte 12:41 de Bolivia a 16:41 UTC para la API', () => {
+  expect(fechaUTC('2026-10-19T12:41')).toBe('2026-10-19T16:41:00.000Z')
+})
+
+it('permite publicar hoy a una hora futura en la zona universitaria', async () => {
+  const reloj = vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-19T15:30:00Z'))
+  apiRequest.mockResolvedValue({ data: trabajo })
+  try {
+    montar(<FormularioTrabajo />)
+    for (const [label, value] of [
+      ['Título', 'Apoyo biblioteca'], ['Descripción', 'Ordenar libros'], ['Ubicación', 'Biblioteca'],
+      ['Inicio previsto (America/La_Paz)', '2026-10-19T12:41'], ['Fin previsto (America/La_Paz)', '2026-10-19T12:43'],
+      ['Duración acreditable (horas)', '1'], ['Cupos', '1'],
+    ]) fireEvent.change(screen.getByLabelText(label), { target: { value } })
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar trabajo' }))
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('/jobs', expect.objectContaining({
+      cuerpo: expect.objectContaining({ inicioPrevisto: '2026-10-19T16:41:00.000Z', finPrevisto: '2026-10-19T16:43:00.000Z' }),
+    })))
+  } finally {
+    reloj.mockRestore()
+  }
+})
+it('muestra en edición la hora de la zona y conserva el instante UTC', async () => {
+  expect(fechas.fechaFormulario?.('2026-10-19T16:41:00.000Z')).toBe('2026-10-19T12:41')
+  apiRequest.mockResolvedValue({ data: trabajo })
+  montar(<FormularioTrabajo trabajo={trabajo} />)
+  expect(screen.getByLabelText(/Inicio previsto/)).toHaveValue('2099-10-20T08:00')
+  expect(screen.getByLabelText(/Fin previsto/)).toHaveValue('2099-10-20T14:00')
+  fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('/jobs/job', expect.objectContaining({
+    metodo: 'PATCH',
+    cuerpo: expect.objectContaining({ inicioPrevisto: new Date(trabajo.inicioPrevisto).toISOString(), finPrevisto: new Date(trabajo.finPrevisto).toISOString() }),
+  })))
+})
+
+it('rechaza una fecha imposible y una hora inexistente en una zona con cambio horario', () => {
+  expect(() => fechaUTC('2026-02-30T12:41')).toThrow()
+  expect(() => fechaUTC('2026-03-08T02:30', 'America/New_York')).toThrow()
+})
+it('conserva segundos y milisegundos del instante original al editar otros campos', () => {
+  expect(fechaUTC('2026-10-20T12:41', 'America/La_Paz', '2026-10-20T16:41:37.500Z'))
+    .toBe('2026-10-20T16:41:37.500Z')
 })

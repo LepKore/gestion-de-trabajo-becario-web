@@ -64,7 +64,7 @@ async function leerCuerpo(respuesta) {
   }
 }
 
-export async function apiRequest(ruta, { metodo = 'GET', cuerpo, query } = {}) {
+export async function apiRequest(ruta, { metodo = 'GET', cuerpo, query, idempotencyKey } = {}) {
   const url = new URL(BASE_URL + ruta, window.location.origin)
   if (query) {
     for (const [clave, valor] of Object.entries(query)) {
@@ -76,6 +76,7 @@ export async function apiRequest(ruta, { metodo = 'GET', cuerpo, query } = {}) {
 
   const cabeceras = { Accept: 'application/json' }
   if (cuerpo !== undefined) cabeceras['Content-Type'] = 'application/json'
+  if (idempotencyKey) cabeceras['Idempotency-Key'] = idempotencyKey
   if (metodo !== 'GET' && metodo !== 'HEAD') {
     const token = leerCsrfGuardado()
     if (token) cabeceras[CSRF_HEADER] = token

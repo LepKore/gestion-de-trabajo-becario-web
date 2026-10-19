@@ -2,7 +2,7 @@
  * Verificacion de paridad del plugin docker-guard frente a la tabla canonica.
  * Uso: node .opencode/plugin/docker-guard.verify.mjs
  */
-import { backendRoot, blocked, pathOf } from "./docker-guard.js";
+import { backendRoot, blocked, blockedFirebase, pathOf } from "./docker-guard.js";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -44,6 +44,15 @@ const CASES = [
   ["git commit -m \"docker volume prune\"", null],
 ];
 
+const FIREBASE_CASES = [
+  ["firebase deploy", "deny"],
+  ["firebase hosting:channel:deploy preview", "deny"],
+  ["firebase use mibeca", "deny"],
+  ["firebase firestore:indexes", "deny"],
+  ["echo firebase deploy", "deny"],
+  ["npm run build", null],
+];
+
 let failures = 0;
 for (const [command, expected] of CASES) {
   const condition = blocked(command, cwd, backend, composeFiles);
@@ -53,5 +62,14 @@ for (const [command, expected] of CASES) {
   console.log(`${ok ? "OK  " : "FALLA"} | ${expected ?? "permitido"} | ${command}${condition ? ` -> ${condition}` : ""}`);
 }
 
-console.log(`\n${CASES.length - failures}/${CASES.length} casos correctos`);
+for (const [command, expected] of FIREBASE_CASES) {
+  const condition = blockedFirebase(command);
+  const actual = condition ? "deny" : null;
+  const ok = actual === expected;
+  if (!ok) failures += 1;
+  console.log(`${ok ? "OK  " : "FALLA"} | ${expected ?? "permitido"} | ${command}${condition ? ` -> ${condition}` : ""}`);
+}
+
+const total = CASES.length + FIREBASE_CASES.length;
+console.log(`\n${total - failures}/${total} casos correctos`);
 process.exit(failures === 0 ? 0 : 1);

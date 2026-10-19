@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MiBeca</title>
+    <script>
+      // Hosting estático: las rutas de la aplicación no existen como archivos.
+      // Se entrega este documento con estado 404 y se reenvía a index.html
+      // conservando la ruta para que el enrutador del cliente la muestre.
+      sessionStorage.setItem('mibeca.ruta404', window.location.pathname);
+      window.location.replace('/index.html' + window.location.search);
+    </script>
+  </head>
+  <body>
+    <p>Redirigiendo…</p>
+  </body>
+</html>

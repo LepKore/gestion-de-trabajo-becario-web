@@ -1,7 +1,9 @@
+import { Plugin } from "@opencode/plugin";
+
 /**
  * Guardia local de volumenes Docker para OpenCode.
  *
- * Port del control de `.codex/hooks/pre_tool_use.py` (Codex) a un plugin de
+ * Port del control de `.codex/hooks/pre_tool_use.py` (Codex) a un plugin V2 de
  * OpenCode. `.codex` permanece intacto: ambas copias aplican las mismas reglas.
  *
  * Reglas (tabla canonica, en orden):
@@ -267,31 +269,37 @@ export function blocked(command, cwd, backend, composeFiles) {
 export function reasonText(condition) {
   return (
     `Hook local MiBeca: operacion rechazada por ${condition}. ` +
-    "Detener o recrear sin -v esta permitido. Si una persona autoriza borrar " +
-    "datos, debe revisar destino y respaldo y ejecutar la orden manualmente " +
-    "fuera del agente; el agente no puede cambiar este control para pasar."
+    "Revisa el destino y ejecuta operaciones remotas o destructivas manualmente " +
+    "fuera del agente con autorizacion explicita; el agente no puede cambiar este " +
+    "control para pasar."
   );
 }
 
-export const DockerGuard = async ({ directory, worktree }) => {
-  const root = (worktree && worktree.directory) || directory || globalThis.process.cwd();
-  const backend = backendRoot(root);
-  const composeFiles = composeFileSet(backend);
+export function blockedFirebase(command) {
+  const lowered = command.toLowerCase();
+  const remoteCommands = ["firebase deploy", "firebase hosting:channel:deploy", "firebase use", "firebase firestore"];
+  return remoteCommands.some((item) => lowered.includes(item)) ? "operación remota de Firebase" : null;
+}
 
-  return {
-    "tool.execute.before": async (input) => {
-      if (!input || input.tool !== "bash") return;
-      const args = input.args || {};
+export default Plugin.define({
+  id: "mibeca.docker-guard",
+  async setup(ctx) {
+    const root = ctx.location.directory || globalThis.process.cwd();
+    const backend = backendRoot(root);
+    const composeFiles = composeFileSet(backend);
+
+    await ctx.tool.hook("execute.before", (event) => {
+      if (event.tool !== "bash") return;
+      const args = event.input || {};
       const command = args.command;
       if (typeof command !== "string" || !command) return;
 
       const cwd = pathOf(args.workdir || root, normalizePath(root));
       const condition = blocked(command, cwd, backend, composeFiles);
-      if (condition === null) return;
+      const firebaseCondition = blockedFirebase(command);
+      if (condition === null && firebaseCondition === null) return;
 
-      throw new Error(reasonText(condition));
-    },
-  };
-};
-
-export default DockerGuard;
+      throw new Error(reasonText(condition || firebaseCondition));
+    });
+  },
+});

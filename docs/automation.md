@@ -16,6 +16,7 @@ Esta configuración es local del clon y no viaja por Git. Los perfiles `.codex/a
 
 | Control | Evento | Resultado |
 | --- | --- | --- |
+| OpenCode `mibeca.docker-guard` | `execute.before` sobre Bash | Plugin V2 cargado desde `.opencode/plugin/docker-guard.js`; aplica las reglas Docker y bloquea comandos remotos de Firebase. Verificar con `opencode plugin list`. |
 | Codex `PreToolUse` sobre Bash | Antes de ejecutar un comando | Bloquea `down -v`/`rm -v` de Compose cuando el directorio, archivo Compose o nombre de proyecto identifica al backend MiBeca; permite Compose de otro proyecto identificado. Bloquea `docker volume rm` solo si el nombre termina en `_mibeca_pgdata` o es `mibeca_pgdata`. Bloquea `volume prune` y `system prune --volumes` sin filtro de proyecto ajeno porque su alcance es ambiguo. Permite `up`, `stop`, `start` y `down` sin `-v`. |
 | Git `pre-commit` | Al confirmar cambios preparados | Rechaza nombres típicos de archivos secretos y marcadores de claves en blobs preparados. Solo muestra rutas, no valores. |
 | Lint y compilación | Antes de abrir PR | `npm run lint && npm run build`, sin repetir una compilación tras cada edición. |

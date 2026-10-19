@@ -105,6 +105,14 @@ def blocked(command, cwd):
     return None
 
 
+def blocked_firebase(command):
+    lowered = command.lower()
+    remote_commands = ("firebase deploy", "firebase hosting:channel:deploy", "firebase use", "firebase firestore")
+    if any(item in lowered for item in remote_commands):
+        return "operación remota de Firebase"
+    return None
+
+
 def main():
     event = json.load(sys.stdin)
     tool_input = event.get("tool_input") or {}
@@ -113,13 +121,14 @@ def main():
         return
     cwd = path_of(tool_input.get("workdir") or event.get("cwd") or os.getcwd(), Path.cwd())
     condition = blocked(command, cwd)
+    condition = condition or blocked_firebase(command)
     if condition is None:
         return
     reason = (
         f"Hook local MiBeca: operación rechazada por {condition}. "
-        "Detener o recrear sin -v está permitido. Si una persona autoriza borrar "
-        "datos, debe revisar destino y respaldo y ejecutar la orden manualmente "
-        "fuera de Codex; el agente no puede cambiar este control para pasar."
+        "Revisa el destino y ejecuta operaciones remotas o destructivas manualmente "
+        "fuera de Codex con autorización explícita; el agente no puede cambiar este "
+        "control para pasar."
     )
     print(json.dumps({"hookSpecificOutput": {
         "hookEventName": "PreToolUse",

@@ -23,7 +23,11 @@ export function AppShell() {
   const { pathname } = useLocation()
   const secciones = seccionesDe(usuario.rol)
   const activa = SECCIONES.find((seccion) => seccion.ruta === pathname)
-  const etiquetaActual = activa ? activa.etiqueta : 'Sesión'
+  const etiquetaActual = activa?.etiqueta
+    || (pathname === '/mis-trabajos/nuevo' ? 'Publicar trabajo' : null)
+    || (/^\/mis-trabajos\/[^/]+\/editar$/.test(pathname) ? 'Editar trabajo' : null)
+    || (/^\/trabajos\/[^/]+$/.test(pathname) ? 'Detalle del trabajo' : null)
+    || 'Sesión'
 
   async function alCerrarSesion() {
     await cerrarSesion()

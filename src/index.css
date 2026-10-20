@@ -3,7 +3,7 @@
 
 * { box-sizing: border-box; }
 html { font-family: var(--font-family); color: var(--text); background: var(--background); }
-body { margin: 0; min-width: 320px; }
+body { margin: 0; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }

@@ -23,16 +23,17 @@ export function AuthProvider({ children }) {
   // Espejo del estado para que el manejador de 401 sepa si había una sesión
   // previa: en el primer arranque un 401 de /auth/me no es una revocación.
   const estadoRef = useRef(estado)
-  useEffect(() => {
-    estadoRef.current = estado
-  }, [estado])
+  const cambiarEstado = useCallback((nuevoEstado) => {
+    estadoRef.current = nuevoEstado
+    setEstado(nuevoEstado)
+  }, [])
 
   const limpiar = useCallback(() => {
     guardarCsrfToken(null)
     setUsuario(null)
     setRequiereCambioPassword(false)
-    setEstado(ESTADOS.anonimo)
-  }, [])
+    cambiarEstado(ESTADOS.anonimo)
+  }, [cambiarEstado])
 
   const recuperarSesion = useCallback(async () => {
     try {
@@ -41,12 +42,12 @@ export function AuthProvider({ children }) {
       guardarCsrfToken(respuesta.data.csrfToken)
       setUsuario(respuesta.data.usuario)
       setRequiereCambioPassword(Boolean(respuesta.data.requiereCambioPassword))
-      setEstado(ESTADOS.autenticado)
+      cambiarEstado(ESTADOS.autenticado)
     } catch {
       if (!montado.current) return
       limpiar()
     }
-  }, [limpiar])
+  }, [cambiarEstado, limpiar])
 
   useEffect(() => {
     montado.current = true
@@ -73,10 +74,10 @@ export function AuthProvider({ children }) {
     guardarCsrfToken(respuesta.data.csrfToken)
     setUsuario(respuesta.data.usuario)
     setRequiereCambioPassword(Boolean(respuesta.data.requiereCambioPassword))
-    setEstado(ESTADOS.autenticado)
+    cambiarEstado(ESTADOS.autenticado)
     setErrorSesion('')
     return respuesta.data
-  }, [])
+  }, [cambiarEstado])
 
   const cerrarSesion = useCallback(async () => {
     try {

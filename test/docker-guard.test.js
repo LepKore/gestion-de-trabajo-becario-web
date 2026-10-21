@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { backendRoot, blocked } from '../.opencode/plugin/docker-guard-rules.js'
+import { backendRoot, blocked } from '../.opencode/lib/docker-guard-rules.js'
 
 describe('mibeca.docker-guard', () => {
   const frontend = 'C:\\VSCode\\Certi 1\\proyecto parcial\\gestion-de-trabajo-becario-web'

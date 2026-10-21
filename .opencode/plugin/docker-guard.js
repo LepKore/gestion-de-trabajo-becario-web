@@ -1,7 +1,7 @@
 import { Plugin } from "@opencode/plugin"
-import { backendRoot, blocked, blockedFirebase, composeFileSet, normalizePath, pathOf, reasonText } from "./docker-guard-rules.js"
+import { backendRoot, blocked, blockedFirebase, composeFileSet, normalizePath, pathOf, reasonText } from "../lib/docker-guard-rules.js"
 
-export { backendRoot, blocked, blockedFirebase, pathOf, reasonText } from "./docker-guard-rules.js"
+export { backendRoot, blocked, blockedFirebase, pathOf, reasonText } from "../lib/docker-guard-rules.js"
 
 export default Plugin.define({
   id: "mibeca.docker-guard",

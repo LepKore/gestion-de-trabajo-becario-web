@@ -8,3 +8,4 @@
 - Conserva la configuración Firebase y sus workflows actuales salvo una tarea expresa. No publiques ni accedas a servicios externos por iniciativa propia.
 - Un cambio en el chat no altera permisos ejecutables. Nunca te autoautorices ni edites controles para evitar un rechazo.
 - El hook de Git se instala localmente con `git config core.hooksPath .githooks`. Antes de un PR, ejecuta `npm run lint` y `npm run build`. Los hooks locales no sustituyen controles compartidos en GitHub.
+- Toda ruta de la API se declara en `src/api/endpoints.js` (`RUTAS` y funciones de dominio). No construyas URLs ni importes `apiRequest` desde páginas o componentes; `test/endpoints.test.js` falla si aparece una ruta literal fuera de ese archivo.

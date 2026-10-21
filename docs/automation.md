@@ -4,7 +4,7 @@
 
 ## Activación
 
-Desde la raíz de cada repositorio, revisa `.codex/hooks.json` y confía en el proyecto/hook desde el cliente Codex (`/hooks` donde esté disponible). Requiere Python 3 disponible como `python` en `PATH`. Los cambios del archivo de hooks requieren volver a revisar la confianza. Instala el hook de Git en cada clon con:
+Desde la raíz de cada repositorio, revisa `.codex/hooks.json` y confía en el proyecto/hook desde el cliente Codex (`/hooks` donde esté disponible). El guardia Docker requiere Python 3 disponible como `python` en `PATH`; la auditoría de código requiere `node`. Los cambios del archivo de hooks requieren volver a revisar la confianza. Instala el hook de Git en cada clon con:
 
 ```bash
 git config core.hooksPath .githooks
@@ -17,6 +17,9 @@ Esta configuración es local del clon y no viaja por Git. Los perfiles `.codex/a
 | Control | Evento | Resultado |
 | --- | --- | --- |
 | OpenCode `mibeca.docker-guard` | `execute.before` sobre Bash | Plugin V2 cargado desde `.opencode/plugin/docker-guard.js`; aplica las reglas Docker y bloquea comandos remotos de Firebase. Verificar con `opencode plugin list`. |
+| OpenCode `mibeca.code-audit` | `execute.before` y `execute.after` sobre `write`/`edit`/`multiedit`/`patch` | Plugin V2 cargado desde `.opencode/plugin/code-audit.js`; rechaza cuatro invariantes duras y registra el resto como avisos que se inyectan en el turno siguiente. Reglas puras en `.opencode/lib/code-audit-rules.js`. |
+| Codex `PreToolUse` sobre `apply_patch` | Antes de aplicar un parche de edición | Ejecuta `node .codex/hooks/audit_bridge.mjs`, que reutiliza el motor de `.opencode/lib/code-audit-rules.js`: rechaza las mismas cuatro invariantes duras. |
+| Codex `PostToolUse` sobre `apply_patch` | Después de aplicar el parche | Relée del disco los archivos tocados y devuelve `additionalContext` con los avisos, sin bloquear. |
 | Codex `PreToolUse` sobre Bash | Antes de ejecutar un comando | Bloquea `down -v`/`rm -v` de Compose cuando el directorio, archivo Compose o nombre de proyecto identifica al backend MiBeca; permite Compose de otro proyecto identificado. Bloquea `docker volume rm` solo si el nombre termina en `_mibeca_pgdata` o es `mibeca_pgdata`. Bloquea `volume prune` y `system prune --volumes` sin filtro de proyecto ajeno porque su alcance es ambiguo. Permite `up`, `stop`, `start` y `down` sin `-v`. |
 | Git `pre-commit` | Al confirmar cambios preparados | Rechaza nombres típicos de archivos secretos y marcadores de claves en blobs preparados. Solo muestra rutas, no valores. |
 | Lint y compilación | Antes de abrir PR | `npm run lint && npm run build`, sin repetir una compilación tras cada edición. |
@@ -27,6 +30,35 @@ El alcance Compose se determina con el directorio de trabajo del evento, `-f`/`C
 
 Si una operación es rechazada, registra la orden, el control, la condición y la alternativa. Para un borrado de datos autorizado, una persona revisa el nombre del volumen, el respaldo y el destino y ejecuta la operación manualmente fuera de Codex; no se concede una excepción permanente. Los permisos del entorno o del proveedor se resuelven en su propia capa.
 
+### Auditoría de código (`mibeca.code-audit`)
+
+Tres capas, todas deterministas: no consultan a un modelo, no usan red y nunca modifican archivos.
+
+- **Bloqueo** (`execute.before`) de cuatro invariantes: secreto incrustado (`SEC-01`), archivo de credenciales por ruta (`SEC-02`), ruta de API literal fuera de `src/api/endpoints.js` (`API-01`) y token de sesión en `localStorage`/`sessionStorage` (`SEC-03`). El token CSRF de `src/lib/api.js` está exento: no es la sesión.
+- **Aviso** (`execute.after`): el resto de reglas se guardan y se inyectan en el contexto del turno siguiente, una sola vez por hallazgo, con un máximo de 20 líneas.
+- **Consulta**: tool `audit_code` (`scope: changed|all`, `paths`, `areas`, `includeInfo`) para el agente y el subagente `reviewer`, y comando `/auditar [all] [--info] [area]` para una tabla legible.
+
+Áreas y reglas: contrato API (`API-01`…`API-06`), seguridad (`SEC-01`…`SEC-06`), accesibilidad (`A11Y-01`…`A11Y-07`), identidad visual (`CSS-01`…`CSS-03`), React (`REACT-01`…`REACT-04`) e higiene con supresiones (`HYG-01`, `HYG-02`, `SUP-01`). La tabla canónica vive en `.opencode/lib/code-audit-rules.js`.
+
+Límites declarados: analiza el texto que el agente escribe, no las ediciones hechas a mano en el editor; es heurístico por línea y no resuelve JSX anidado ni imports, así que los casos que exigen AST quedan para `eslint`, el subagente `reviewer` o Playwright; los avisos no bloquean y un falso positivo se corrige ajustando la regla, no silenciándola. `A11Y-05` no marca campos envueltos en `<label>` y `CSS-02` no marca el `!important` de `prefers-reduced-motion`. Un cambio en el propio motor requiere revisión humana: el agente puede editar el archivo, pero `.opencode/` queda fuera del alcance de la auditoría para no auditar sus propios patrones.
+
+### Auditoría de código en Codex (`.codex/hooks/audit_bridge.mjs`)
+
+Codex usa el mismo catálogo que OpenCode: el puente importa `.opencode/lib/code-audit-rules.js` en vez de mantener una segunda tabla de reglas, así que un cambio de regla vale para los dos clientes. Se activa desde `.codex/hooks.json` en dos eventos sobre `apply_patch`:
+
+- **`PreToolUse`**: extrae del parche los archivos y las líneas añadidas, y responde con `permissionDecision: deny` si aparece `SEC-01`, `SEC-02`, `SEC-03` o `API-01`. Las líneas se numeran con la cabecera del hunk, de modo que el mensaje apunta al archivo real.
+- **`PostToolUse`**: relée del disco los archivos que tocó el parche y devuelve los avisos como `additionalContext`. Aquí la línea es exacta porque el archivo ya existe.
+
+Consulta manual, equivalente a `/auditar`:
+
+```bash
+node .codex/hooks/audit_bridge.mjs --all
+node .codex/hooks/audit_bridge.mjs --changed
+node .codex/hooks/audit_bridge.mjs --paths src/pages/Panel.jsx
+```
+
+Requiere `node` en `PATH` y que el cliente ejecute el hook con la raíz del repositorio como directorio de trabajo. Igual que el hook Docker, no cubre escrituras hechas por `Bash` (un `Set-Content` o un `sed -i` no pasan por `apply_patch`), ni ediciones humanas en el editor. Los cambios en `.codex/hooks.json` obligan a revisar de nuevo la confianza del hook en el cliente.
+
 ## Pruebas rápidas
 
 ```bash
@@ -36,3 +68,13 @@ printf '%s\n' '{"tool_input":{"command":"docker compose -f ../gestion-de-trabajo
 ```
 
 El primer evento no produce salida. El segundo devuelve JSON con `permissionDecision: deny`. Para probar el hook de Git sin modificar el índice del proyecto, crea un repositorio temporal con una copia de `.githooks/pre-commit` y prepara un archivo `.env`; debe rechazarlo mostrando solo su ruta.
+
+Para la auditoría de código:
+
+```bash
+node .opencode/plugin/code-audit.verify.mjs
+npx vitest run test/code-audit.test.js test/codex-audit.test.js
+node .codex/hooks/audit_bridge.mjs --changed
+```
+
+El primer comando imprime `OK`/`FALLA` por cada caso canónico y sale con código 1 si alguno no coincide; el segundo ejecuta las 37 pruebas del motor y las 10 del puente de Codex dentro de la suite del proyecto. Ninguno de los tres modifica archivos.

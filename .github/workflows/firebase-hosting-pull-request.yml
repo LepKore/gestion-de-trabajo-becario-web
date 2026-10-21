@@ -14,11 +14,23 @@ jobs:
   build_and_preview:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
+    env:
+      VITE_API_URL: ${{ vars.VITE_API_URL || 'https://gestion-de-trabajo-becario-backend.onrender.com/api/v1' }}
     steps:
       - uses: actions/checkout@v4
-      - run: npm ci && npm run build
-        env:
-          VITE_API_URL: https://gestion-de-trabajo-becario-backend.onrender.com/api/v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Validar URL pública de la API
+        run: node scripts/validate-deploy-env.js
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: Comprobar que la API pública está lista
+        shell: bash
+        run: curl --fail --silent --show-error --retry 2 --retry-delay 2 --max-time 15 "${VITE_API_URL%/api/v1}/ready"
       - uses: FirebaseExtended/action-hosting-deploy@500ac625ca2dd40cbd15f7659af953801858032a # v0.11.0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}

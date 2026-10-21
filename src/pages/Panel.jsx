@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth.js'
 import { Alert, Metric } from '../components/ui.jsx'
 import { useRecurso } from '../lib/useRecurso.js'
+import { RUTAS } from '../api/endpoints.js'
 import { ProgresoBecario } from './Control.jsx'
 
 function EstadoCarga({ recurso, children }) {
@@ -11,8 +12,8 @@ function EstadoCarga({ recurso, children }) {
 }
 
 function PanelBecario() {
-  const total = useRecurso('/me/applications', { page: 1, pageSize: 1 })
-  const pendientes = useRecurso('/me/applications', { estado: 'PENDIENTE', page: 1, pageSize: 1 })
+  const total = useRecurso(RUTAS.postulaciones.mias, { page: 1, pageSize: 1 })
+  const pendientes = useRecurso(RUTAS.postulaciones.mias, { estado: 'PENDIENTE', page: 1, pageSize: 1 })
   return <>
     <ProgresoBecario />
     <section className="panel">
@@ -27,7 +28,7 @@ function PanelBecario() {
 }
 
 function PanelEncargado() {
-  const recurso = useRecurso('/me/dashboard')
+  const recurso = useRecurso(RUTAS.yo.panel)
   return <section className="panel" aria-labelledby="titulo-resumen-encargado">
     <header className="panel-head"><div><h2 id="titulo-resumen-encargado">Tus trabajos y postulantes</h2><p>Resumen de tus publicaciones, decisiones y cierres pendientes.</p></div></header>
     <EstadoCarga recurso={recurso}>{({ data }) => <>
@@ -43,9 +44,9 @@ function PanelEncargado() {
 }
 
 function PanelAdministrador() {
-  const usuarios = useRecurso('/users', { page: 1, pageSize: 1 })
-  const trabajos = useRecurso('/jobs', { page: 1, pageSize: 1 })
-  const estudiantes = useRecurso('/students/progress', { page: 1, pageSize: 1 })
+  const usuarios = useRecurso(RUTAS.usuarios.lista, { page: 1, pageSize: 1 })
+  const trabajos = useRecurso(RUTAS.trabajos.lista, { page: 1, pageSize: 1 })
+  const estudiantes = useRecurso(RUTAS.estudiantes.progreso, { page: 1, pageSize: 1 })
   return <section className="panel" aria-labelledby="titulo-resumen-admin">
     <header className="panel-head"><div><h2 id="titulo-resumen-admin">Supervisión de MiBeca</h2><p>Totales generales y acceso a la consulta individual de progreso.</p></div></header>
     <div className="metrics metrics--summary">

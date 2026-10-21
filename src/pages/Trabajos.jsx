@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth.js'
-import { apiRequest } from '../lib/api.js'
+import { RUTAS, postulacionesApi, trabajosApi } from '../api/endpoints.js'
 import { useRecurso } from '../lib/useRecurso.js'
 import { fechaFormulario, fechaUTC, fechaVisible, horasAMinutos, ZONA_UNIVERSITARIA } from '../lib/trabajos.js'
 import { Alert, EmptyState, Field } from '../components/ui.jsx'
@@ -35,7 +35,7 @@ export function Trabajos({ modo = 'disponibles' }) {
   const [busqueda, setBusqueda] = useState('')
   const [estado, setEstado] = useState(modo === 'disponibles' ? 'PUBLICADO' : '')
   const propios = modo === 'propios' || modo === 'postulantes'
-  const recurso = useRecurso(propios ? '/me/jobs' : '/jobs', { page: pagina, pageSize: 20, q, estado })
+  const recurso = useRecurso(propios ? RUTAS.trabajos.propios : RUTAS.trabajos.lista, { page: pagina, pageSize: 20, q, estado })
   return <section className="panel">
     <header className="panel-head"><h2>{modo === 'postulantes' ? 'Elige un trabajo para gestionar sus postulantes' : propios ? 'Trabajos a tu cargo' : 'Consulta de trabajos'}</h2>
       {propios && <Link className="button button--primary" to="/mis-trabajos/nuevo">Publicar trabajo</Link>}
@@ -57,7 +57,7 @@ export function Trabajos({ modo = 'disponibles' }) {
 }
 export function DetalleTrabajo() {
   const { id } = useParams()
-  const recurso = useRecurso(`/jobs/${id}`)
+  const recurso = useRecurso(RUTAS.trabajos.detalle(id))
   return <EstadoCarga recurso={recurso}>{({ data }) => <DetalleContenido key={id} trabajo={data} recargar={recurso.recargar} />}</EstadoCarga>
 }
 function DetalleContenido({ trabajo, recargar }) {
@@ -69,7 +69,7 @@ function DetalleContenido({ trabajo, recargar }) {
   const proximo = trabajo.estado === 'PUBLICADO' && trabajo.faseTemporal === 'PROXIMO'
   async function postular() {
     setOcupado(true); setError('')
-    try { await apiRequest(`/jobs/${trabajo.id}/applications`, { metodo: 'POST', cuerpo: {} }); setPostulado(true) }
+    try { await postulacionesApi.postular(trabajo.id); setPostulado(true) }
     catch (fallo) { setError(fallo.message) }
     finally { setOcupado(false) }
   }
@@ -101,10 +101,10 @@ function Postulantes({ trabajo, actualizarTrabajo }) {
   const [decision, setDecision] = useState(null)
   const [ocupado, setOcupado] = useState(false)
   const [error, setError] = useState('')
-  const recurso = useRecurso(`/jobs/${trabajo.id}/applications`, { page: pagina, pageSize: 20, estado })
+  const recurso = useRecurso(RUTAS.trabajos.postulaciones(trabajo.id), { page: pagina, pageSize: 20, estado })
   async function decidir() {
     setOcupado(true); setError('')
-    try { await apiRequest(`/applications/${decision.id}/${decision.accion}`, { metodo: 'POST', cuerpo: {} }); setDecision(null); actualizarTrabajo() }
+    try { await postulacionesApi.decidir(decision.id, decision.accion); setDecision(null); actualizarTrabajo() }
     catch (fallo) { setError(fallo.message); recurso.recargar() }
     finally { setOcupado(false) }
   }
@@ -137,7 +137,7 @@ function FiltroPostulacion({ estado, cambiar }) {
 export function MisPostulaciones() {
   const [pagina, setPagina] = useState(1)
   const [estado, setEstado] = useState('')
-  const recurso = useRecurso('/me/applications', { page: pagina, pageSize: 20, estado })
+  const recurso = useRecurso(RUTAS.postulaciones.mias, { page: pagina, pageSize: 20, estado })
   return <section className="panel"><h2>Mis postulaciones</h2><p className="section-intro">Una postulación pendiente no reserva cupo. Una vez enviada, no se puede retirar.</p>
     <FiltroPostulacion estado={estado} cambiar={(valor) => { setEstado(valor); setPagina(1) }} />
     <EstadoCarga recurso={recurso}>{({ data, meta }) => <>
@@ -149,7 +149,7 @@ export function MisPostulaciones() {
 export function EditarTrabajo() {
   const { id } = useParams()
   const { usuario } = useAuth()
-  const recurso = useRecurso(`/jobs/${id}`)
+  const recurso = useRecurso(RUTAS.trabajos.detalle(id))
   return <EstadoCarga recurso={recurso}>{({ data }) => usuario.id !== data.encargadoId || data.estado !== 'PUBLICADO' || data.faseTemporal !== 'PROXIMO' || data.aceptados > 0 ? <Alert tipo="warning">Este trabajo no se puede editar. Debe ser propio, no haber iniciado y no tener aceptados.</Alert> : <FormularioTrabajo key={id} trabajo={data} />}</EstadoCarga>
 }
 export function FormularioTrabajo({ trabajo }) {
@@ -168,7 +168,7 @@ export function FormularioTrabajo({ trabajo }) {
     } catch (fallo) { setError(fallo.message); return }
     setOcupado(true)
     try {
-      const respuesta = await apiRequest(trabajo ? `/jobs/${trabajo.id}` : '/jobs', { metodo: trabajo ? 'PATCH' : 'POST', cuerpo })
+      const respuesta = trabajo ? await trabajosApi.actualizar(trabajo.id, cuerpo) : await trabajosApi.crear(cuerpo)
       navegar(`/trabajos/${respuesta.data.id}`)
     } catch (fallo) { setError(fallo.message); setOcupado(false) }
   }

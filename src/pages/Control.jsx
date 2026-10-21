@@ -1,6 +1,6 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { apiRequest } from '../lib/api.js'
+import { RUTAS, postulacionesApi, trabajosApi } from '../api/endpoints.js'
 import { useRecurso } from '../lib/useRecurso.js'
 import { fechaVisible, ZONA_UNIVERSITARIA } from '../lib/trabajos.js'
 import { Alert, EmptyState, Metric } from '../components/ui.jsx'
@@ -25,7 +25,7 @@ function Paginacion({ meta, cambiar }) {
 }
 
 export function ProgresoBecario() {
-  const recurso = useRecurso('/me/progress')
+  const recurso = useRecurso(RUTAS.yo.progreso)
   return <section className="panel" aria-labelledby="titulo-progreso">
     <h2 id="titulo-progreso">Mi progreso</h2>
     <EstadoCarga recurso={recurso}>{({ data }) => <>
@@ -52,7 +52,7 @@ function asistenciaTexto(item) {
 
 export function HistorialBecario() {
   const [pagina, setPagina] = useState(1)
-  const recurso = useRecurso('/me/history', { page: pagina, pageSize: 20 })
+  const recurso = useRecurso(RUTAS.yo.historial, { page: pagina, pageSize: 20 })
   return <>
     <ProgresoBecario />
     <section className="panel">
@@ -88,7 +88,7 @@ function ListaAsistencia({ attendance }) {
 }
 
 export function AsistenciaCerrada({ trabajoId }) {
-  const recurso = useRecurso(`/jobs/${trabajoId}/attendance`)
+  const recurso = useRecurso(RUTAS.trabajos.asistencia(trabajoId))
   return <section className="panel">
     <h2>Asistencia registrada</h2>
     <EstadoCarga recurso={recurso}>{({ data }) => <ListaAsistencia attendance={data} />}</EstadoCarga>
@@ -100,7 +100,7 @@ async function cargarAceptados(trabajoId) {
   let pagina = 1
   let paginas
   do {
-    const respuesta = await apiRequest(`/jobs/${trabajoId}/applications`, { query: { estado: 'ACEPTADA', page: pagina, pageSize: 50 } })
+    const respuesta = await postulacionesApi.listarDeTrabajo(trabajoId, { estado: 'ACEPTADA', page: pagina, pageSize: 50 })
     aceptados.push(...respuesta.data)
     paginas = respuesta.meta.totalPages
     pagina += 1
@@ -140,7 +140,7 @@ export function FormularioCierre({ trabajo, actualizarTrabajo }) {
     setOcupado(true)
     setError('')
     try {
-      await apiRequest(`/jobs/${trabajo.id}/close`, { metodo: 'POST', cuerpo: { attendance }, idempotencyKey: intento.current.clave })
+      await trabajosApi.cerrar(trabajo.id, attendance, intento.current.clave)
       setHecho(true)
       actualizarTrabajo()
     } catch (fallo) {
@@ -176,8 +176,8 @@ export function FormularioCierre({ trabajo, actualizarTrabajo }) {
 export function CierreYHoras() {
   const [paginaAbiertos, setPaginaAbiertos] = useState(1)
   const [paginaHistorial, setPaginaHistorial] = useState(1)
-  const abiertos = useRecurso('/me/jobs', { estado: 'PUBLICADO', page: paginaAbiertos, pageSize: 20 })
-  const historial = useRecurso('/me/history', { page: paginaHistorial, pageSize: 20 })
+  const abiertos = useRecurso(RUTAS.trabajos.propios, { estado: 'PUBLICADO', page: paginaAbiertos, pageSize: 20 })
+  const historial = useRecurso(RUTAS.yo.historial, { page: paginaHistorial, pageSize: 20 })
   return <>
     <section className="panel">
       <h2>Trabajos pendientes de cierre</h2>

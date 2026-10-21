@@ -38,7 +38,7 @@ export function ProgresoBecario() {
       <div className="progress-track" role="progressbar" aria-label="Progreso de horas acreditadas" aria-valuemin={0} aria-valuemax={data.targetMinutes || 1} aria-valuenow={Math.min(data.accreditedMinutes, data.targetMinutes || 1)}>
         <span style={{ width: `${data.targetMinutes > 0 ? Math.min(100, data.accreditedMinutes / data.targetMinutes * 100) : 0}%` }} />
       </div>
-      <p className="progress-caption">El progreso se calcula con los minutos acreditados al cerrar trabajos.</p>
+      <p className="progress-caption">El progreso se calcula con las horas acreditadas al cerrar trabajos.</p>
     </>}</EstadoCarga>
   </section>
 }

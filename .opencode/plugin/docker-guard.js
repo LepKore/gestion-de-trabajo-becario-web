@@ -50,7 +50,11 @@ function normalizePath(value) {
     parts.push(chunk);
   }
   const joined = parts.join(sep);
-  if (isWin) return `${joined[0]}:${sep}${joined.slice(2)}`;
+  if (isWin) {
+    const drive = joined.slice(0, 2);
+    const rest = joined.slice(2).replace(/^[\\/]+/, "");
+    return `${drive}${sep}${rest}`;
+  }
   return `/${joined}`;
 }
 

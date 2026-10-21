@@ -7,6 +7,18 @@ const DESCRIPCIONES = {
   '/change-password': 'Debes cambiar la contraseña temporal antes de continuar.',
 }
 
+const TITULOS_RUTA = {
+  '/mis-trabajos/nuevo': 'Publicar trabajo',
+}
+
+function tituloDeRuta(pathname, activa) {
+  if (activa) return activa.etiqueta
+  if (TITULOS_RUTA[pathname]) return TITULOS_RUTA[pathname]
+  if (pathname.startsWith('/trabajos/')) return 'Detalle del trabajo'
+  if (pathname.endsWith('/editar')) return 'Editar trabajo'
+  return 'Sesión'
+}
+
 function Logo() {
   return (
     <span className="brand">
@@ -23,7 +35,7 @@ export function AppShell() {
   const { pathname } = useLocation()
   const secciones = seccionesDe(usuario.rol)
   const activa = SECCIONES.find((seccion) => seccion.ruta === pathname)
-  const etiquetaActual = activa ? activa.etiqueta : 'Sesión'
+  const etiquetaActual = tituloDeRuta(pathname, activa)
 
   async function alCerrarSesion() {
     await cerrarSesion()

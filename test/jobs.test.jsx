@@ -45,6 +45,31 @@ it('becario postula sin reservar cupo y muestra conflicto', async () => {
   expect(screen.getByText(/pendiente no reserva cupo/)).toBeInTheDocument()
   expect(apiRequest).toHaveBeenCalledWith('/jobs/job/applications', { metodo: 'POST', cuerpo: {} })
 })
+it('presenta los datos del trabajo como bloques etiquetados y no como texto corrido', async () => {
+  rolActual = 'BECARIO'
+  apiRequest.mockResolvedValue({ data: trabajo })
+  montar(null, '/trabajos/job')
+  expect(await screen.findByText('Apoyo biblioteca')).toBeInTheDocument()
+  expect(screen.getByText('Estado')).toBeInTheDocument()
+  expect(screen.getByText('Ubicación')).toBeInTheDocument()
+  expect(screen.getByText('Horas acreditables')).toBeInTheDocument()
+  expect(screen.getByText('Fecha y horario')).toBeInTheDocument()
+  expect(screen.getByText('Cupos')).toBeInTheDocument()
+  expect(screen.getByText('Encargado')).toBeInTheDocument()
+})
+it('mantiene visibles las acciones de postulantes también en la tarjeta móvil', async () => {
+  const postulacion = { id: 'app', estado: 'PENDIENTE', estudiante: { nombre: 'Luis', codigo: '00123', carrera: 'Sistemas' } }
+  apiRequest.mockImplementation(async ruta => {
+    if (ruta === '/jobs/job') return { data: trabajo }
+    if (ruta === '/jobs/job/applications') return lista([postulacion])
+  })
+  montar(null, '/trabajos/job')
+  expect(await screen.findAllByText('Luis')).toHaveLength(2)
+  expect(screen.getAllByRole('button', { name: 'Aceptar a Luis' })).toHaveLength(2)
+  expect(screen.getAllByRole('button', { name: 'Rechazar a Luis' })).toHaveLength(2)
+  expect(screen.getAllByText('Código')).toHaveLength(2)
+  expect(screen.getAllByText('Carrera')).toHaveLength(2)
+})
 it('propietario confirma una aceptación irreversible', async () => {
   const postulacion = { id: 'app', estado: 'PENDIENTE', estudiante: { nombre: 'Luis', codigo: '00123', carrera: 'Sistemas' } }
   apiRequest.mockImplementation(async (ruta, opciones) => {
@@ -53,7 +78,7 @@ it('propietario confirma una aceptación irreversible', async () => {
     if (opciones?.metodo === 'POST') return { data: { ...postulacion, estado: 'ACEPTADA' } }
   })
   montar(null, '/trabajos/job')
-  fireEvent.click(await screen.findByRole('button', { name: 'Aceptar a Luis' }))
+  fireEvent.click((await screen.findAllByRole('button', { name: 'Aceptar a Luis' }))[0])
   expect(apiRequest).not.toHaveBeenCalledWith('/applications/app/accept', expect.anything())
   fireEvent.click(screen.getByRole('button', { name: 'Confirmar aceptación' }))
   await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('/applications/app/accept', { metodo: 'POST', cuerpo: {} }))

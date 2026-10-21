@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useRecurso } from '../lib/useRecurso.js'
 import { Alert, Dialog, EmptyState } from '../components/ui.jsx'
 import { fechaVisible } from '../lib/trabajos.js'
+import { RUTAS } from '../api/endpoints.js'
 
 function horas(minutos) {
   return `${new Intl.NumberFormat('es-BO', { maximumFractionDigits: 1 }).format(minutos / 60)} h`
@@ -15,7 +16,7 @@ function EstadoCarga({ recurso, children }) {
 
 function HistorialEstudiante({ estudiante, onCerrar }) {
   const [pagina, setPagina] = useState(1)
-  const recurso = useRecurso(`/students/${estudiante.id}/history`, { page: pagina, pageSize: 10 })
+  const recurso = useRecurso(RUTAS.estudiantes.historial(estudiante.id), { page: pagina, pageSize: 10 })
   return (
     <Dialog
       titulo={`Historial de ${estudiante.name}`}
@@ -53,7 +54,7 @@ export function AdminSupervision() {
   const [pendientes, setPendientes] = useState('true')
   const [seleccionado, setSeleccionado] = useState(null)
   const cerrarHistorial = useCallback(() => setSeleccionado(null), [])
-  const recurso = useRecurso('/students/progress', {
+  const recurso = useRecurso(RUTAS.estudiantes.progreso, {
     q: consulta,
     conHorasPendientes: pendientes,
     page: pagina,

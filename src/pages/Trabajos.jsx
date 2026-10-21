@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth.js'
-import { apiRequest } from '../lib/api.js'
+import { RUTAS, postulacionesApi, trabajosApi } from '../api/endpoints.js'
 import { useRecurso } from '../lib/useRecurso.js'
 import { fechaFormulario, fechaUTC, fechaVisible, horasAMinutos, ZONA_UNIVERSITARIA } from '../lib/trabajos.js'
 import { Alert, EmptyState, Field } from '../components/ui.jsx'
@@ -35,7 +35,7 @@ export function Trabajos({ modo = 'disponibles' }) {
   const [busqueda, setBusqueda] = useState('')
   const [estado, setEstado] = useState(modo === 'disponibles' ? 'PUBLICADO' : '')
   const propios = modo === 'propios' || modo === 'postulantes'
-  const recurso = useRecurso(propios ? '/me/jobs' : '/jobs', { page: pagina, pageSize: 20, q, estado })
+  const recurso = useRecurso(propios ? RUTAS.trabajos.propios : RUTAS.trabajos.lista, { page: pagina, pageSize: 20, q, estado })
   return <section className="panel">
     <header className="panel-head"><h2>{modo === 'postulantes' ? 'Elige un trabajo para gestionar sus postulantes' : propios ? 'Trabajos a tu cargo' : 'Consulta de trabajos'}</h2>
       {propios && <Link className="button button--primary" to="/mis-trabajos/nuevo">Publicar trabajo</Link>}
@@ -57,7 +57,7 @@ export function Trabajos({ modo = 'disponibles' }) {
 }
 export function DetalleTrabajo() {
   const { id } = useParams()
-  const recurso = useRecurso(`/jobs/${id}`)
+  const recurso = useRecurso(RUTAS.trabajos.detalle(id))
   return <EstadoCarga recurso={recurso}>{({ data }) => <DetalleContenido key={id} trabajo={data} recargar={recurso.recargar} />}</EstadoCarga>
 }
 function DetalleContenido({ trabajo, recargar }) {
@@ -69,14 +69,22 @@ function DetalleContenido({ trabajo, recargar }) {
   const proximo = trabajo.estado === 'PUBLICADO' && trabajo.faseTemporal === 'PROXIMO'
   async function postular() {
     setOcupado(true); setError('')
-    try { await apiRequest(`/jobs/${trabajo.id}/applications`, { metodo: 'POST', cuerpo: {} }); setPostulado(true) }
+    try { await postulacionesApi.postular(trabajo.id); setPostulado(true) }
     catch (fallo) { setError(fallo.message) }
     finally { setOcupado(false) }
   }
   return <>
-    <section className="panel"><header className="panel-head"><h2>{trabajo.titulo}</h2><Link to={usuario.rol === 'ADMIN' ? '/admin/trabajos' : propio ? '/mis-trabajos' : '/trabajos-disponibles'}>Volver a trabajos</Link></header>
-      <p>{trabajo.descripcion}</p><DatosTrabajo trabajo={trabajo} /><p>Fechas en {ZONA_UNIVERSITARIA}.</p>
-      <p>Una postulación pendiente no reserva cupo. Las decisiones son definitivas.</p>
+    <section className="panel job-detail"><header className="panel-head"><h2>{trabajo.titulo}</h2><Link to={usuario.rol === 'ADMIN' ? '/admin/trabajos' : propio ? '/mis-trabajos' : '/trabajos-disponibles'}>Volver a trabajos</Link></header>
+      <p className="job-description">{trabajo.descripcion}</p>
+      <dl className="job-facts">
+        <div><dt>Estado</dt><dd>{trabajo.estado} · {trabajo.faseTemporal.replaceAll('_', ' ')}</dd></div>
+        <div><dt>Ubicación</dt><dd>{trabajo.ubicacion}</dd></div>
+        <div><dt>Horas acreditables</dt><dd>{trabajo.duracionMinutos / 60} h</dd></div>
+        <div><dt>Fecha y horario</dt><dd>Inicio: {fechaVisible(trabajo.inicioPrevisto)} · Fin: {fechaVisible(trabajo.finPrevisto)} ({ZONA_UNIVERSITARIA})</dd></div>
+        <div><dt>Cupos</dt><dd>{trabajo.cuposDisponibles} de {trabajo.cupos} disponibles · {trabajo.aceptados} aceptados</dd></div>
+        <div><dt>Encargado</dt><dd>{trabajo.encargadoNombre} · {trabajo.contextoTipo} · {trabajo.contextoNombre}</dd></div>
+      </dl>
+      <p className="job-rule">Una postulación pendiente no reserva cupo. Las decisiones son definitivas.</p>
       {error && <Alert tipo="error">{error}</Alert>}
       {postulado && <Alert conRol={false}>Postulación enviada. Consulta su estado en Mis postulaciones.</Alert>}
       {usuario.rol === 'BECARIO' && <><button className="button button--primary" disabled={ocupado || postulado || !proximo || trabajo.cuposDisponibles <= 0} onClick={postular}>{ocupado ? 'Enviando…' : 'Postularme'}</button> <Link to="/mis-postulaciones">Mis postulaciones</Link></>}
@@ -93,10 +101,10 @@ function Postulantes({ trabajo, actualizarTrabajo }) {
   const [decision, setDecision] = useState(null)
   const [ocupado, setOcupado] = useState(false)
   const [error, setError] = useState('')
-  const recurso = useRecurso(`/jobs/${trabajo.id}/applications`, { page: pagina, pageSize: 20, estado })
+  const recurso = useRecurso(RUTAS.trabajos.postulaciones(trabajo.id), { page: pagina, pageSize: 20, estado })
   async function decidir() {
     setOcupado(true); setError('')
-    try { await apiRequest(`/applications/${decision.id}/${decision.accion}`, { metodo: 'POST', cuerpo: {} }); setDecision(null); actualizarTrabajo() }
+    try { await postulacionesApi.decidir(decision.id, decision.accion); setDecision(null); actualizarTrabajo() }
     catch (fallo) { setError(fallo.message); recurso.recargar() }
     finally { setOcupado(false) }
   }
@@ -108,10 +116,17 @@ function Postulantes({ trabajo, actualizarTrabajo }) {
       <button className="button button--secondary" disabled={ocupado} onClick={() => setDecision(null)}>Cancelar</button>
     </div></div>}
     <EstadoCarga recurso={recurso}>{({ data, meta }) => <>
-      {data.length === 0 ? <EmptyState title="Sin postulaciones">Todavía no hay postulaciones con este estado.</EmptyState> : <div className="table-scroll"><table><thead><tr><th>Nombre</th><th>Código</th><th>Carrera</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>{data.map((item) => <tr key={item.id}>
+      {data.length === 0 ? <EmptyState title="Sin postulaciones">Todavía no hay postulaciones con este estado.</EmptyState> : <>
+        <div className="table-scroll postulantes-table"><table><thead><tr><th>Nombre</th><th>Código</th><th>Carrera</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>{data.map((item) => <tr key={item.id}>
         <th scope="row">{item.estudiante.nombre}</th><td>{item.estudiante.codigo}</td><td>{item.estudiante.carrera}</td><td>{item.estado}</td><td>
           {item.estado === 'PENDIENTE' && trabajo.estado === 'PUBLICADO' && <div className="row-actions">{['accept', 'reject'].map((accion) => <button key={accion} className="button button--secondary" disabled={ocupado || (accion === 'accept' && (trabajo.faseTemporal !== 'PROXIMO' || trabajo.cuposDisponibles <= 0))} aria-label={`${accion === 'accept' ? 'Aceptar' : 'Rechazar'} a ${item.estudiante.nombre}`} onClick={() => setDecision({ id: item.id, nombre: item.estudiante.nombre, accion })}>{accion === 'accept' ? 'Aceptar' : 'Rechazar'}</button>)}</div>}
-        </td></tr>)}</tbody></table></div>}
+        </td></tr>)}</tbody></table></div>
+        <div className="postulantes-cards">{data.map((item) => <article className="postulante-card" key={item.id}>
+          <h3>{item.estudiante.nombre}</h3>
+          <dl className="postulante-facts"><div><dt>Código</dt><dd>{item.estudiante.codigo}</dd></div><div><dt>Carrera</dt><dd>{item.estudiante.carrera}</dd></div><div><dt>Estado</dt><dd><span className="status status--info">{item.estado}</span></dd></div></dl>
+          {item.estado === 'PENDIENTE' && trabajo.estado === 'PUBLICADO' && <div className="row-actions">{['accept', 'reject'].map((accion) => <button key={accion} className="button button--secondary" disabled={ocupado || (accion === 'accept' && (trabajo.faseTemporal !== 'PROXIMO' || trabajo.cuposDisponibles <= 0))} aria-label={`${accion === 'accept' ? 'Aceptar' : 'Rechazar'} a ${item.estudiante.nombre}`} onClick={() => setDecision({ id: item.id, nombre: item.estudiante.nombre, accion })}>{accion === 'accept' ? 'Aceptar' : 'Rechazar'}</button>)}</div>}
+        </article>)}</div>
+      </>}
       <Paginacion meta={meta} cambiar={setPagina} />
     </>}</EstadoCarga>
   </section>
@@ -122,8 +137,8 @@ function FiltroPostulacion({ estado, cambiar }) {
 export function MisPostulaciones() {
   const [pagina, setPagina] = useState(1)
   const [estado, setEstado] = useState('')
-  const recurso = useRecurso('/me/applications', { page: pagina, pageSize: 20, estado })
-  return <section className="panel"><h2>Mis postulaciones</h2><p>Una postulación pendiente no reserva cupo. No hay retiro de postulaciones.</p>
+  const recurso = useRecurso(RUTAS.postulaciones.mias, { page: pagina, pageSize: 20, estado })
+  return <section className="panel"><h2>Mis postulaciones</h2><p className="section-intro">Una postulación pendiente no reserva cupo. Una vez enviada, no se puede retirar.</p>
     <FiltroPostulacion estado={estado} cambiar={(valor) => { setEstado(valor); setPagina(1) }} />
     <EstadoCarga recurso={recurso}>{({ data, meta }) => <>
       {data.length === 0 ? <EmptyState title="Sin postulaciones">Puedes consultar los trabajos disponibles para postularte.</EmptyState> : data.map((item) => <article className="panel" key={item.id}><h3><Link to={`/trabajos/${item.trabajoId}`}>{item.trabajo.titulo}</Link></h3><span className="status status--info">{item.estado}</span><DatosTrabajo trabajo={item.trabajo} /></article>)}
@@ -134,7 +149,7 @@ export function MisPostulaciones() {
 export function EditarTrabajo() {
   const { id } = useParams()
   const { usuario } = useAuth()
-  const recurso = useRecurso(`/jobs/${id}`)
+  const recurso = useRecurso(RUTAS.trabajos.detalle(id))
   return <EstadoCarga recurso={recurso}>{({ data }) => usuario.id !== data.encargadoId || data.estado !== 'PUBLICADO' || data.faseTemporal !== 'PROXIMO' || data.aceptados > 0 ? <Alert tipo="warning">Este trabajo no se puede editar. Debe ser propio, no haber iniciado y no tener aceptados.</Alert> : <FormularioTrabajo key={id} trabajo={data} />}</EstadoCarga>
 }
 export function FormularioTrabajo({ trabajo }) {
@@ -153,11 +168,11 @@ export function FormularioTrabajo({ trabajo }) {
     } catch (fallo) { setError(fallo.message); return }
     setOcupado(true)
     try {
-      const respuesta = await apiRequest(trabajo ? `/jobs/${trabajo.id}` : '/jobs', { metodo: trabajo ? 'PATCH' : 'POST', cuerpo })
+      const respuesta = trabajo ? await trabajosApi.actualizar(trabajo.id, cuerpo) : await trabajosApi.crear(cuerpo)
       navegar(`/trabajos/${respuesta.data.id}`)
     } catch (fallo) { setError(fallo.message); setOcupado(false) }
   }
-  return <section className="panel"><h2>{trabajo ? 'Editar trabajo' : 'Publicar trabajo'}</h2><p>Introduce las fechas en la hora de {ZONA_UNIVERSITARIA}; la conversión a UTC se realiza automáticamente. La duración acreditable es independiente del intervalo de fechas.</p>
+  return <section className="panel"><h2>{trabajo ? 'Editar trabajo' : 'Publicar trabajo'}</h2><p className="section-intro">Introduce las fechas en la hora de {ZONA_UNIVERSITARIA}; la conversión a UTC se realiza automáticamente. La duración acreditable es independiente del intervalo de fechas.</p>
     {error && <Alert tipo="error">{error}</Alert>}
     <form onSubmit={guardar}><fieldset disabled={ocupado} style={{ border: 0, padding: 0, minWidth: 0 }}><legend>Condiciones del trabajo</legend><div className="form-grid">
       <Field label="Título" name="titulo" required maxLength={200} defaultValue={trabajo?.titulo || ''} />

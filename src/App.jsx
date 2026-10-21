@@ -38,9 +38,9 @@ function App() {
             <Route path="/trabajos-disponibles" element={<ProtectedRoute roles={['BECARIO']}><Trabajos /></ProtectedRoute>} />
             <Route path="/mis-postulaciones" element={<ProtectedRoute roles={['BECARIO']}><MisPostulaciones /></ProtectedRoute>} />
             <Route path="/trabajos/:id" element={<DetalleTrabajo />} />
-<Route path="/mis-trabajos/nuevo" element={<ProtectedRoute roles={['ENCARGADO']}><FormularioTrabajo /></ProtectedRoute>} />
-<Route path="/mis-trabajos/:id/editar" element={<ProtectedRoute roles={['ENCARGADO']}><EditarTrabajo /></ProtectedRoute>} />
-<Route path="/historial" element={<ProtectedRoute roles={['BECARIO']}><HistorialBecario /></ProtectedRoute>} />
+            <Route path="/mis-trabajos/nuevo" element={<ProtectedRoute roles={['ENCARGADO']}><FormularioTrabajo /></ProtectedRoute>} />
+            <Route path="/mis-trabajos/:id/editar" element={<ProtectedRoute roles={['ENCARGADO']}><EditarTrabajo /></ProtectedRoute>} />
+            <Route path="/historial" element={<ProtectedRoute roles={['BECARIO']}><HistorialBecario /></ProtectedRoute>} />
             <Route path="/mis-trabajos" element={<ProtectedRoute roles={['ENCARGADO']}><Trabajos modo="propios" /></ProtectedRoute>} />
             <Route path="/postulaciones" element={<ProtectedRoute roles={['ENCARGADO']}><Trabajos modo="postulantes" /></ProtectedRoute>} />
             <Route path="/cierre-y-horas" element={<ProtectedRoute roles={['ENCARGADO']}><CierreYHoras /></ProtectedRoute>} />

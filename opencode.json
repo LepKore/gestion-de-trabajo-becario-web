@@ -1,6 +1,9 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "instructions": ["AGENTS.md"],
+  // Los plugins de `.opencode/plugin/` se autocargan; declararlos aqui como
+  // ruta de archivo produce "configured plugin path must be a directory".
+  "plugins": [],
   "permission": {
     "edit": "allow",
     "bash": "ask",

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AuthContext } from './auth-context.js'
-import { apiRequest, guardarCsrfToken, registrarManejadorNoAutorizado } from '../lib/api.js'
+import { guardarCsrfToken, registrarManejadorNoAutorizado } from '../lib/api.js'
+import { sesionApi } from '../api/endpoints.js'
 
 const ESTADOS = {
   cargando: 'cargando',
@@ -37,7 +38,7 @@ export function AuthProvider({ children }) {
 
   const recuperarSesion = useCallback(async () => {
     try {
-      const respuesta = await apiRequest('/auth/me')
+      const respuesta = await sesionApi.actual()
       if (!montado.current) return
       guardarCsrfToken(respuesta.data.csrfToken)
       setUsuario(respuesta.data.usuario)
@@ -67,10 +68,7 @@ export function AuthProvider({ children }) {
   }, [limpiar, recuperarSesion])
 
   const iniciarSesion = useCallback(async (correo, password) => {
-    const respuesta = await apiRequest('/auth/login', {
-      metodo: 'POST',
-      cuerpo: { correo, password },
-    })
+    const respuesta = await sesionApi.iniciarSesion(correo, password)
     guardarCsrfToken(respuesta.data.csrfToken)
     setUsuario(respuesta.data.usuario)
     setRequiereCambioPassword(Boolean(respuesta.data.requiereCambioPassword))
@@ -81,7 +79,7 @@ export function AuthProvider({ children }) {
 
   const cerrarSesion = useCallback(async () => {
     try {
-      await apiRequest('/auth/logout', { metodo: 'POST' })
+      await sesionApi.cerrarSesion()
     } catch {
       // Si el servidor ya no reconoce la sesión, el cierre local es válido.
     }
@@ -90,10 +88,7 @@ export function AuthProvider({ children }) {
   }, [limpiar])
 
   const cambiarContrasena = useCallback(async (payload) => {
-    const respuesta = await apiRequest('/auth/change-password', {
-      metodo: 'POST',
-      cuerpo: payload,
-    })
+    const respuesta = await sesionApi.cambiarContrasena(payload)
     guardarCsrfToken(respuesta.data.csrfToken)
     setUsuario(respuesta.data.usuario)
     setRequiereCambioPassword(Boolean(respuesta.data.requiereCambioPassword))

@@ -2,7 +2,7 @@
  * Verificacion de paridad del plugin docker-guard frente a la tabla canonica.
  * Uso: node .opencode/plugin/docker-guard.verify.mjs
  */
-import { backendRoot, blocked, blockedFirebase, pathOf } from "./docker-guard.js";
+import { backendRoot, blocked, blockedFirebase, pathOf } from "../lib/docker-guard-rules.js";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 

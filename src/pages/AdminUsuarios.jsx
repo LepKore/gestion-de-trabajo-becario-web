@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { apiRequest } from '../lib/api.js'
+import { usuariosApi } from '../api/endpoints.js'
 import { useAuth } from '../auth/useAuth.js'
 import { Alert, Dialog, EmptyTable, Field, Paginado } from '../components/ui.jsx'
 
@@ -51,14 +51,12 @@ function ListaUsuarios({ filtros, pagina, setPagina }) {
     setCargando(true)
     setError('')
     try {
-      const respuesta = await apiRequest('/users', {
-        query: {
-          rol: filtros.rol,
-          activo: filtros.activo,
-          q: filtros.q,
-          page: pagina,
-          pageSize: 10,
-        },
+      const respuesta = await usuariosApi.listar({
+        rol: filtros.rol,
+        activo: filtros.activo,
+        q: filtros.q,
+        page: pagina,
+        pageSize: 10,
       })
       setDatos({ usuarios: respuesta.data, meta: respuesta.meta })
     } catch (fallo) {
@@ -124,13 +122,13 @@ function FilaUsuario({ usuario, onRecargar }) {
   const { usuario: actual } = useAuth()
   const esPropia = Boolean(actual && actual.id === usuario.id)
 
-  async function accion(ruta, cuerpo) {
+  async function accion(operacion) {
     setError('')
     setTemporal('')
     setConfirmando(false)
     setOcupado(true)
     try {
-      const respuesta = await apiRequest(`/users/${usuario.id}${ruta}`, { metodo: 'POST', cuerpo })
+      const respuesta = await operacion(usuario.id)
       if (respuesta && respuesta.data && respuesta.data.passwordTemporal) {
         setTemporal(respuesta.data.passwordTemporal)
       }
@@ -151,7 +149,7 @@ function FilaUsuario({ usuario, onRecargar }) {
       <td>{usuario.activo ? <span className="status status--success">Activo</span> : <span className="status status--muted">Inactivo</span>}</td>
       <td><EstadoContraseña usuario={usuario} /></td>
       <td className="row-actions">
-        <button className="button button--secondary" type="button" disabled={ocupado} onClick={() => accion('/reset-password', {})}>
+        <button className="button button--secondary" type="button" disabled={ocupado} onClick={() => accion(usuariosApi.restablecerPassword)}>
           Nueva contraseña
         </button>
         {usuario.activo ? (
@@ -165,7 +163,7 @@ function FilaUsuario({ usuario, onRecargar }) {
             Desactivar
           </button>
         ) : (
-          <button className="button button--secondary" type="button" disabled={ocupado} onClick={() => accion('/reactivate', {})}>
+          <button className="button button--secondary" type="button" disabled={ocupado} onClick={() => accion(usuariosApi.reactivar)}>
             Reactivar
           </button>
         )}
@@ -187,7 +185,7 @@ function FilaUsuario({ usuario, onRecargar }) {
           </p>
           <div className="dialog-actions">
             <button className="button button--secondary" type="button" onClick={() => setConfirmando(false)}>Cancelar</button>
-            <button className="button button--danger" type="button" disabled={ocupado} onClick={() => accion('/deactivate', {})}>
+            <button className="button button--danger" type="button" disabled={ocupado} onClick={() => accion(usuariosApi.desactivar)}>
               Desactivar
             </button>
           </div>
@@ -322,7 +320,7 @@ function DialogCrearUsuario({ onCerrar, onCreado }) {
     }
     setEnviando(true)
     try {
-      const respuesta = await apiRequest('/users', { metodo: 'POST', cuerpo })
+      const respuesta = await usuariosApi.crear(cuerpo)
       onCreado(respuesta.data)
     } catch (fallo) {
       setError(fallo.message)

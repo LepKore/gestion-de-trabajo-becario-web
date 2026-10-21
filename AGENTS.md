@@ -1,5 +1,6 @@
 # MiBeca: instrucciones para agentes del frontend
 
+- Al iniciar cualquier tarea, carga primero la skill `mibeca-web-sdd-router` (`.agents/skills/mibeca-web-sdd-router/SKILL.md`): ella decide qué skills locales aplican. Si ninguna aplica, analiza globales; si tampoco hay, implementa sin skills y termina anunciando que no se usaron.
 - El coordinador asigna archivos y evita ediciones simultáneas sobre ellos. Un subagente recibe una tarea acotada y entrega resultados verificables; las decisiones persistentes se registran en documentación versionada.
 - Lee `docs/PLAN_MVP_MIBECA.md` y `docs/AI_CONTEXT.md` al comenzar. Consulta el contrato canónico en el repositorio backend y anota su revisión; no mantengas un contrato alternativo en el frontend.
 - Este repositorio contiene la interfaz React con Vite. La API, PostgreSQL y migraciones pertenecen al repositorio backend.

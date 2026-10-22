@@ -93,10 +93,32 @@ export const trabajosApi = {
 
 // --- Postulaciones --------------------------------------------------------
 
+// El contrato solo expone postulantes por trabajo; esta función recorre los
+// trabajos propios y devuelve una sola lista, cada postulación con su trabajo.
+async function todasLasDelTrabajo(trabajo) {
+  const postulaciones = []
+  for (let page = 1; ; page += 1) {
+    const { data, meta } = await apiRequest(RUTAS.trabajos.postulaciones(trabajo.id), {
+      query: { page, pageSize: 50 },
+    })
+    postulaciones.push(...data)
+    if (page >= meta.totalPages) break
+  }
+  return postulaciones.map((postulacion) => ({ ...postulacion, trabajo }))
+}
+
 export const postulacionesApi = {
   listarDeTrabajo: (id, query) => apiRequest(RUTAS.trabajos.postulaciones(id), { query }),
   postular: (id) =>
     apiRequest(RUTAS.trabajos.postulaciones(id), { metodo: 'POST', cuerpo: {} }),
+  // shortcut: tope de 50 trabajos propios, paginar si un encargado supera ese número.
+  deMisTrabajos: async () => {
+    const { data: trabajos } = await apiRequest(RUTAS.trabajos.propios, {
+      query: { page: 1, pageSize: 50 },
+    })
+    const listas = await Promise.all(trabajos.map(todasLasDelTrabajo))
+    return listas.flat()
+  },
   decidir: (id, accion) => {
     if (accion !== 'accept' && accion !== 'reject') {
       throw new Error(`Decisión de postulación no válida: ${accion}`)

@@ -1,11 +1,14 @@
+@import 'tailwindcss';
 @import './styles/theme.css';
 @import './App.css';
 
 * { box-sizing: border-box; }
-html { font-family: var(--font-family); color: var(--text); background: var(--background); }
+html { font-family: var(--font-body-md); color: var(--color-on-surface); background: var(--color-background); -webkit-text-size-adjust: 100%; }
 body { margin: 0; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
-button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
 h1, h2, h3, p { margin-top: 0; }
+h1, h2, h3 { font-weight: 600; }
+h1 { font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }

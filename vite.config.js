@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
@@ -12,7 +13,7 @@ const proxyApi = {
 }
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   server: { proxy: proxyApi },
   // Solo para comprobar el build contra la API local. En producción el
   // frontend se sirve como archivos estáticos y el backend es otro origen:

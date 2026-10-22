@@ -23,9 +23,22 @@ function Logo() {
   return (
     <span className="brand">
       <img src="/upb-logo.png" width="580" height="290" alt="Logo de la UPB" />
-      <span>MiBeca</span>
+      <span className="brand-copy"><strong>UPB | MiBeca</strong><small>Gestión de becas</small></span>
     </span>
   )
+}
+
+const ICONOS = {
+  '/': 'space_dashboard',
+  '/trabajos-disponibles': 'work_outline',
+  '/mis-postulaciones': 'assignment_turned_in',
+  '/historial': 'history',
+  '/mis-trabajos': 'list_alt',
+  '/postulaciones': 'how_to_reg',
+  '/cierre-y-horas': 'verified',
+  '/admin/usuarios': 'group',
+  '/admin/trabajos': 'domain_verification',
+  '/admin/supervision': 'clinical_notes',
 }
 
 /** Estructura común: navegación del rol, identidad de la sesión y salida. */
@@ -46,7 +59,10 @@ export function AppShell() {
     <div className="app-shell">
       <aside className="sidebar" aria-label="Navegación principal">
         <Logo />
-        <div className="sidebar-caption">PLATAFORMA ACADÉMICA</div>
+        <div className="role-card">
+          <span>Vista institucional activa</span>
+          <strong><span className="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>{NOMBRES_ROL[usuario.rol]}</strong>
+        </div>
         <nav aria-label={`Opciones de ${NOMBRES_ROL[usuario.rol]}`}>
           {secciones.map((seccion) => (
             <NavLink
@@ -55,14 +71,17 @@ export function AppShell() {
               end={seccion.ruta === '/'}
               className={({ isActive }) => `nav-item ${isActive ? 'nav-item--active' : ''}`}
             >
-              <span className="nav-dot" aria-hidden="true" />
+              <span className="material-symbols-outlined nav-icon" aria-hidden="true">{ICONOS[seccion.ruta] || 'circle'}</span>
               {seccion.etiqueta}
             </NavLink>
           ))}
         </nav>
         <div className="sidebar-bottom">
-          MiBeca
-          <small>{NOMBRES_ROL[usuario.rol]}</small>
+          <div className="sidebar-policy">
+            <span className="material-symbols-outlined" aria-hidden="true">policy</span>
+            <strong>Regla institucional</strong>
+            <small>Una postulación pendiente no reserva cupo.</small>
+          </div>
         </div>
       </aside>
       <div className="main-column">

@@ -53,12 +53,19 @@ export function EmptyTable({ headers, title, text }) {
   )
 }
 
+const TONOS = {
+  brand: 'text-primary-container',
+  success: 'text-success',
+  warning: 'text-warning',
+  neutral: 'text-neutral',
+}
+
 export function Metric({ label, hint, tone = 'brand', value = '—' }) {
   return (
-    <article className={`metric metric--${tone}`}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{hint}</small>
+    <article className="grid content-start gap-1.5 rounded-card border border-outline-variant bg-surface-container-lowest p-5 shadow-card">
+      <span className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">{label}</span>
+      <strong className={`font-headline-md text-3xl leading-none tabular-nums ${TONOS[tone] || TONOS.brand}`}>{value}</strong>
+      <small className="text-xs leading-snug text-on-surface-variant">{hint}</small>
     </article>
   )
 }

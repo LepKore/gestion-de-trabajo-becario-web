@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth.js'
 import { Alert, Metric } from '../components/ui.jsx'
 import { useRecurso } from '../lib/useRecurso.js'
+import { fechaVisible } from '../lib/trabajos.js'
+import { NOMBRES_ROL } from '../config/navegacion.js'
 import { RUTAS } from '../api/endpoints.js'
 import { ProgresoBecario } from './Control.jsx'
 
@@ -73,7 +75,7 @@ export function Panel() {
   return (
     <>
       <div className="metrics">
-        <Metric label="Rol" value={usuario.rol} hint="El rol se define al crear la cuenta y no se modifica." />
+        <Metric label="Rol" value={NOMBRES_ROL[usuario.rol]} hint="El rol se define al crear la cuenta y no se modifica." />
         <Metric label="Estado de la cuenta" value={usuario.activo ? 'Activa' : 'Inactiva'} tone={usuario.activo ? 'success' : 'neutral'} hint={usuario.activo ? 'Puedes iniciar sesión.' : 'Contacta a la administración.'} />
         <Metric label="Contraseña" value={usuario.requiereCambioPassword ? 'Temporal' : 'Definida'} tone={usuario.requiereCambioPassword ? 'warning' : 'success'} hint={usuario.requiereCambioPassword ? 'Debes cambiarla para usar el sistema.' : 'No requiere cambios.'} />
         {perfil && <Metric label={usuario.estudiante ? 'Meta semestral' : 'Contexto'} value={usuario.estudiante ? `${metaSemestralHoras} h` : usuario.encargado.contextoTipo} hint={usuario.estudiante ? `${contexto} · Las horas se acumulan al cerrar trabajos.` : contexto} />}
@@ -90,7 +92,7 @@ export function Panel() {
           <dl className="detail-list">
             <div><dt>Nombre</dt><dd>{usuario.nombre}</dd></div>
             <div><dt>Correo</dt><dd>{usuario.correo}</dd></div>
-            <div><dt>Rol</dt><dd>{usuario.rol}</dd></div>
+            <div><dt>Rol</dt><dd>{NOMBRES_ROL[usuario.rol]}</dd></div>
             {usuario.estudiante && (
               <>
                 <div><dt>Código de estudiante</dt><dd>{usuario.estudiante.codigo}</dd></div>
@@ -103,7 +105,7 @@ export function Panel() {
                 <div><dt>Contexto</dt><dd>{usuario.encargado.contextoNombre}</dd></div>
               </>
             )}
-            <div><dt>Cuenta creada</dt><dd>{new Date(usuario.creadoEn).toLocaleString('es-CO')}</dd></div>
+            <div><dt>Cuenta creada</dt><dd>{fechaVisible(usuario.creadoEn)}</dd></div>
           </dl>
         </div>
       </section>

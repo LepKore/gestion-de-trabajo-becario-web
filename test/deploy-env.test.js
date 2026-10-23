@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { validarApiPublica } from '../scripts/validate-deploy-env.js'
 

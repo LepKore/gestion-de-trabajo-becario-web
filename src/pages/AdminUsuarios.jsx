@@ -117,7 +117,7 @@ function ListaUsuarios({ filtros, pagina, setPagina }) {
 function FilaUsuario({ usuario, onRecargar }) {
   const [error, setError] = useState('')
   const [temporal, setTemporal] = useState('')
-  const [confirmando, setConfirmando] = useState(false)
+  const [confirmando, setConfirmando] = useState('')
   const [ocupado, setOcupado] = useState(false)
   const { usuario: actual } = useAuth()
   const esPropia = Boolean(actual && actual.id === usuario.id)
@@ -125,7 +125,7 @@ function FilaUsuario({ usuario, onRecargar }) {
   async function accion(operacion) {
     setError('')
     setTemporal('')
-    setConfirmando(false)
+    setConfirmando('')
     setOcupado(true)
     try {
       const respuesta = await operacion(usuario.id)
@@ -149,7 +149,7 @@ function FilaUsuario({ usuario, onRecargar }) {
       <td>{usuario.activo ? <span className="status status--success">Activo</span> : <span className="status status--muted">Inactivo</span>}</td>
       <td><EstadoContraseña usuario={usuario} /></td>
       <td className="row-actions">
-        <button className="button button--secondary" type="button" disabled={ocupado} onClick={() => accion(usuariosApi.restablecerPassword)}>
+        <button className="button button--secondary" type="button" disabled={ocupado} onClick={() => setConfirmando('restablecer')}>
           Nueva contraseña
         </button>
         {usuario.activo ? (
@@ -158,7 +158,7 @@ function FilaUsuario({ usuario, onRecargar }) {
             type="button"
             disabled={ocupado || esPropia}
             title={esPropia ? 'No puedes desactivar tu propia cuenta' : ''}
-            onClick={() => setConfirmando(true)}
+            onClick={() => setConfirmando('desactivar')}
           >
             Desactivar
           </button>
@@ -176,17 +176,28 @@ function FilaUsuario({ usuario, onRecargar }) {
       </td>
       {confirmando && (
         <Dialog
-          titulo="Desactivar usuario"
-          descripcion="Es una baja lógica: se conserva el historial y se revocan sus sesiones."
-          onCerrar={() => setConfirmando(false)}
+          titulo={confirmando === 'restablecer' ? 'Nueva contraseña' : 'Desactivar usuario'}
+          descripcion={
+            confirmando === 'restablecer'
+              ? 'Se revocan sus sesiones y se genera una contraseña temporal que solo se muestra una vez.'
+              : 'Es una baja lógica: se conserva el historial y se revocan sus sesiones.'
+          }
+          onCerrar={() => setConfirmando('')}
         >
           <p>
-            ¿Desactivar a <strong>{usuario.nombre}</strong> ({usuario.correo})? No podrá iniciar sesión hasta que se reactive.
+            {confirmando === 'restablecer' ? '¿Generar una contraseña temporal para ' : '¿Desactivar a '}
+            <strong>{usuario.nombre}</strong> ({usuario.correo})
+            {confirmando === 'restablecer' ? '?' : '? No podrá iniciar sesión hasta que se reactive.'}
           </p>
           <div className="dialog-actions">
-            <button className="button button--secondary" type="button" onClick={() => setConfirmando(false)}>Cancelar</button>
-            <button className="button button--danger" type="button" disabled={ocupado} onClick={() => accion(usuariosApi.desactivar)}>
-              Desactivar
+            <button className="button button--secondary" type="button" onClick={() => setConfirmando('')}>Cancelar</button>
+            <button
+              className={`button ${confirmando === 'restablecer' ? 'button--primary' : 'button--danger'}`}
+              type="button"
+              disabled={ocupado}
+              onClick={() => accion(confirmando === 'restablecer' ? usuariosApi.restablecerPassword : usuariosApi.desactivar)}
+            >
+              {confirmando === 'restablecer' ? 'Generar contraseña' : 'Desactivar'}
             </button>
           </div>
         </Dialog>

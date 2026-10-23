@@ -43,4 +43,17 @@ describe('accesibilidad del diálogo', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(document.activeElement).toBe(disparador)
   })
+
+  it('aísla el fondo y bloquea el scroll mientras está abierto', async () => {
+    render(<div className="app-shell"><DialogHarness /></div>)
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir diálogo' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Confirmar acción' })
+    expect(dialogo.closest('.app-shell')).toBeNull()
+    expect(document.querySelector('.app-shell')).toHaveAttribute('inert')
+    expect(document.body.style.overflow).toBe('hidden')
+
+    fireEvent.keyDown(dialogo, { key: 'Escape' })
+    await waitFor(() => expect(document.querySelector('.app-shell')).not.toHaveAttribute('inert'))
+    expect(document.body.style.overflow).toBe('')
+  })
 })

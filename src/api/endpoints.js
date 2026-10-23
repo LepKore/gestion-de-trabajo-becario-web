@@ -1,6 +1,6 @@
 // Endpoints de la API de MiBeca en un único lugar.
 //
-// Contrato de referencia: `backend/openapi.yaml`, revisión 1.3.0.
+// Contrato de referencia: `backend/openapi.yaml`, revisión 1.4.0 (commit 8ed9226).
 // La sesión vive en una cookie HttpOnly; el token CSRF, las cookies y el
 // manejo de errores son responsabilidad de `src/lib/api.js`.
 //
@@ -101,6 +101,7 @@ async function todasLasDelTrabajo(trabajo) {
     const { data, meta } = await apiRequest(RUTAS.trabajos.postulaciones(trabajo.id), {
       query: { page, pageSize: 50 },
     })
+    if (!meta) throw new Error('La API no devolvió paginación de postulaciones.')
     postulaciones.push(...data)
     if (page >= meta.totalPages) break
   }

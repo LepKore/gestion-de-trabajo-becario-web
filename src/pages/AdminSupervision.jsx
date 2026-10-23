@@ -1,12 +1,8 @@
 import { useCallback, useState } from 'react'
 import { useRecurso } from '../lib/useRecurso.js'
 import { Alert, Dialog, EmptyState } from '../components/ui.jsx'
-import { fechaVisible } from '../lib/trabajos.js'
+import { fechaVisible, horas } from '../lib/trabajos.js'
 import { RUTAS } from '../api/endpoints.js'
-
-function horas(minutos) {
-  return `${new Intl.NumberFormat('es-BO', { maximumFractionDigits: 1 }).format(minutos / 60)} h`
-}
 
 function EstadoCarga({ recurso, children }) {
   if (recurso.cargando) return <p className="loading" role="status">Cargando…</p>

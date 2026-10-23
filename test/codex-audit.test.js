@@ -1,6 +1,8 @@
+// @vitest-environment node
 import { execFileSync } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { tmpdir } from "node:os";
 import process from "node:process";
 import { describe, expect, it } from "vitest";
 
@@ -24,8 +26,8 @@ function preToolUse(texto) {
   return ejecutar({ hook_event_name: "PreToolUse", cwd: RAIZ, tool_input: { command: texto } });
 }
 
-function postToolUse(texto) {
-  return ejecutar({ hook_event_name: "PostToolUse", cwd: RAIZ, tool_input: { command: texto } });
+function postToolUse(texto, cwd = RAIZ) {
+  return ejecutar({ hook_event_name: "PostToolUse", cwd, tool_input: { command: texto } });
 }
 
 describe("archivosDelParche", () => {
@@ -125,7 +127,9 @@ describe("hook PostToolUse", () => {
   });
 
   it("devuelve additionalContext y no un rechazo", () => {
-    const destino = join(process.cwd(), "src", "lib", "__tmp_codex_audit.js");
+    // Fuera de src/: si el proceso muere, el temporal no queda en el repo.
+    const raizTemporal = join(tmpdir(), "mibeca-codex-audit");
+    const destino = join(raizTemporal, "src", "lib", "__tmp_codex_audit.js");
     mkdirSync(dirname(destino), { recursive: true });
     writeFileSync(destino, "console.log('depuracion');\n", "utf8");
     try {
@@ -135,13 +139,14 @@ describe("hook PostToolUse", () => {
           "@@ -0,0 +1,1 @@",
           "+console.log('depuracion');",
         ]),
+        raizTemporal,
       );
       const cuerpo = JSON.parse(salida);
       expect(cuerpo.hookSpecificOutput.hookEventName).toBe("PostToolUse");
       expect(cuerpo.hookSpecificOutput.additionalContext).toContain("HYG-01");
       expect(cuerpo.hookSpecificOutput.permissionDecision).toBeUndefined();
     } finally {
-      rmSync(destino, { force: true });
+      rmSync(raizTemporal, { recursive: true, force: true });
     }
   });
 });

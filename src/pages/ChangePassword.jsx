@@ -29,6 +29,7 @@ export function ChangePassword() {
 
   const longitudInsuficiente = formulario.passwordNuevo.length > 0 && formulario.passwordNuevo.length < MINIMO
   const noCoincide = formulario.passwordNuevoConfirmacion.length > 0 && formulario.passwordNuevo !== formulario.passwordNuevoConfirmacion
+  const incompleto = !formulario.passwordActual || !formulario.passwordNuevo || !formulario.passwordNuevoConfirmacion
 
   async function alEnviar(evento) {
     evento.preventDefault()
@@ -87,7 +88,11 @@ export function ChangePassword() {
             value={formulario.passwordNuevoConfirmacion}
             onChange={actualizar('passwordNuevoConfirmacion')}
           />
-          <button className="button button--primary" type="submit" disabled={enviando}>
+          <button
+            className="button button--primary"
+            type="submit"
+            disabled={enviando || incompleto || longitudInsuficiente || noCoincide}
+          >
             {enviando ? 'Guardando…' : 'Guardar contraseña'}
           </button>
           

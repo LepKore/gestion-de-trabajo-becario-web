@@ -84,6 +84,12 @@ export function Dialog({ titulo, descripcion, onCerrar, children }) {
   useEffect(() => {
     const anterior = document.activeElement
     refDialogo.current?.focus()
+    // `inert` retira del árbol accesible todo lo que queda detrás; el portal
+    // mantiene el diálogo fuera de `.app-shell`, así que no se inertiza a sí mismo.
+    const fondo = document.querySelector('.app-shell')
+    fondo?.setAttribute('inert', '')
+    const desbordamiento = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
     function alPulsar(event) {
       if (event.key === 'Escape') {
         cerrarRef.current()
@@ -114,6 +120,8 @@ export function Dialog({ titulo, descripcion, onCerrar, children }) {
     document.addEventListener('keydown', alPulsar)
     return () => {
       document.removeEventListener('keydown', alPulsar)
+      fondo?.removeAttribute('inert')
+      document.body.style.overflow = desbordamiento
       if (anterior instanceof HTMLElement) anterior.focus()
     }
   }, [])

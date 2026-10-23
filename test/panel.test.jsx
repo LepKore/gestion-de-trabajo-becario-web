@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { apiRequest } from '../src/lib/api.js'
 import { useAuth } from '../src/auth/useAuth.js'
@@ -17,6 +17,11 @@ function montar(usuario) {
   return render(<MemoryRouter><Panel /></MemoryRouter>)
 }
 
+/** Métrica concreta: evita que un número cualquiera de la página haga pasar la aserción. */
+function metrica(label) {
+  return screen.getByText(label).closest('article')
+}
+
 describe('resumen por rol', () => {
   it('resume progreso, postulaciones e historial para el becario', async () => {
     const usuario = { id: 'student', rol: 'BECARIO', activo: true, requiereCambioPassword: false, nombre: 'Ana', correo: 'ana@uni.edu', creadoEn: '2026-10-01T00:00:00Z', estudiante: { carrera: 'Sistemas', semestre: 4, metaMinutos: 120, codigo: '00731' } }
@@ -31,9 +36,11 @@ describe('resumen por rol', () => {
   it('resume trabajos, postulaciones y cierres propios del encargado', async () => {
     apiRequest.mockResolvedValue({ data: { totalJobs: 7, publishedJobs: 5, closedJobs: 2, pendingCloseJobs: 1, pendingApplications: 3, acceptedStudents: 4 } })
     montar({ id: 'owner', rol: 'ENCARGADO', activo: true, requiereCambioPassword: false, nombre: 'Luis', correo: 'luis@uni.edu', creadoEn: '2026-10-01T00:00:00Z', encargado: { contextoTipo: 'AREA', contextoNombre: 'Biblioteca' } })
-    expect(await screen.findByText('7')).toBeInTheDocument()
-    expect(screen.getByText('3')).toBeInTheDocument()
-    expect(screen.getByText('1')).toBeInTheDocument()
+    await screen.findByText('Trabajos propios')
+    expect(within(metrica('Trabajos propios')).getByText('7')).toBeInTheDocument()
+    expect(within(metrica('Postulaciones pendientes')).getByText('3')).toBeInTheDocument()
+    expect(within(metrica('Pendientes de cierre')).getByText('1')).toBeInTheDocument()
+    expect(within(metrica('Trabajos propios')).getByText('5 publicados · 2 cerrados')).toBeInTheDocument()
     expect(apiRequest).toHaveBeenCalledWith('/me/dashboard', expect.anything())
     expect(screen.getByRole('link', { name: 'Cierres e historial de asistencia' })).toHaveAttribute('href', '/cierre-y-horas')
   })
@@ -44,9 +51,10 @@ describe('resumen por rol', () => {
       return { data: [], meta: { page: 1, pageSize: 1, total, totalPages: total } }
     })
     montar({ id: 'admin', rol: 'ADMIN', activo: true, requiereCambioPassword: false, nombre: 'Admin', correo: 'admin@uni.edu', creadoEn: '2026-10-01T00:00:00Z' })
-    expect(await screen.findByText('9')).toBeInTheDocument()
-    expect(screen.getByText('6')).toBeInTheDocument()
-    expect(screen.getByText('4')).toBeInTheDocument()
+    await screen.findByText('Cuentas')
+    expect(within(metrica('Cuentas')).getByText('9')).toBeInTheDocument()
+    expect(within(metrica('Trabajos')).getByText('6')).toBeInTheDocument()
+    expect(within(metrica('Estudiantes')).getByText('4')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Consultar progreso e historial' })).toHaveAttribute('href', '/admin/supervision')
   })
 })

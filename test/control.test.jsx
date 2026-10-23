@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { apiRequest } from '../src/lib/api.js'
 import { FormularioCierre, HistorialBecario } from '../src/pages/Control.jsx'
@@ -61,7 +61,10 @@ it('muestra progreso real y conserva la ausencia en el historial del becario', a
   })
   render(<MemoryRouter><HistorialBecario /></MemoryRouter>)
   await screen.findByText('No asistió')
-  expect(screen.getAllByText('10 h')).toHaveLength(2)
+  const metrica = (label) => screen.getByText(label).closest('article')
+  expect(within(metrica('Meta')).getByText('10 h')).toBeInTheDocument()
+  expect(within(metrica('Faltantes')).getByText('10 h')).toBeInTheDocument()
+  expect(within(metrica('Acreditadas')).getByText('0 h')).toBeInTheDocument()
   expect(apiRequest).toHaveBeenCalledWith('/me/progress', { query: {} })
   expect(apiRequest).toHaveBeenCalledWith('/me/history', { query: { page: 1, pageSize: 20 } })
 })

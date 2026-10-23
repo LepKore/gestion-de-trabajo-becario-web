@@ -7,5 +7,12 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./test/setup.js'],
     globals: true,
+    // 'forks' + jsdom en cada archivo agotaba el handshake del pool en Windows.
+    pool: 'threads',
+    maxWorkers: 4,
+    minWorkers: 1,
+    teardownTimeout: 20000,
+    clearMocks: true,
+    restoreMocks: true,
   },
 })

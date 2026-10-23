@@ -2,12 +2,8 @@
 import { Link } from 'react-router-dom'
 import { RUTAS, postulacionesApi, trabajosApi } from '../api/endpoints.js'
 import { useRecurso } from '../lib/useRecurso.js'
-import { fechaVisible, ZONA_UNIVERSITARIA } from '../lib/trabajos.js'
+import { fechaVisible, horas, ZONA_UNIVERSITARIA } from '../lib/trabajos.js'
 import { Alert, EmptyState, Metric } from '../components/ui.jsx'
-
-function horas(minutos) {
-  return new Intl.NumberFormat('es-BO', { maximumFractionDigits: 1 }).format(minutos / 60) + ' h'
-}
 
 function EstadoCarga({ recurso, children }) {
   if (recurso.cargando) return <p className="loading" role="status">Cargando…</p>
@@ -115,6 +111,7 @@ export function FormularioCierre({ trabajo, actualizarTrabajo }) {
   const [cargando, setCargando] = useState(true)
   const [ocupado, setOcupado] = useState(false)
   const [hecho, setHecho] = useState(false)
+  const [intentoCarga, setIntentoCarga] = useState(0)
   const intento = useRef(null)
 
   useEffect(() => {
@@ -124,7 +121,15 @@ export function FormularioCierre({ trabajo, actualizarTrabajo }) {
       (fallo) => { if (vigente) { setError(fallo.message); setCargando(false) } },
     )
     return () => { vigente = false }
-  }, [trabajo.id])
+  }, [trabajo.id, intentoCarga])
+
+  // El reintento recarga aceptados, no el detalle: `trabajo.id` no cambia y el
+  // efecto anterior no volvería a dispararse por sí solo.
+  function reintentarAceptados() {
+    setCargando(true)
+    setError('')
+    setIntentoCarga((n) => n + 1)
+  }
 
   function marcar(id, asistio) {
     setMarcas((actual) => ({ ...actual, [id]: asistio }))
@@ -157,7 +162,7 @@ export function FormularioCierre({ trabajo, actualizarTrabajo }) {
     <p>Marca asistencia o ausencia de cada estudiante aceptado. Cada asistente recibirá {horas(trabajo.duracionMinutos)}. Esta decisión no se puede modificar desde la aplicación.</p>
     {cargando ? <p className="loading" role="status">Cargando estudiantes aceptados…</p> : <>
       {error && <Alert tipo="error">{error}</Alert>}
-      {aceptados === null ? <button className="button button--secondary" type="button" onClick={actualizarTrabajo}>Actualizar trabajo</button> : <form onSubmit={cerrar}>
+      {aceptados === null ? <button className="button button--secondary" type="button" onClick={reintentarAceptados}>Reintentar carga de aceptados</button> : <form onSubmit={cerrar}>
         {aceptados.length === 0 && <p>No hay estudiantes aceptados. Puedes cerrar el trabajo sin asistencias; las postulaciones pendientes serán rechazadas.</p>}
         <div className="attendance-list">{aceptados.map((item) => <fieldset className="attendance-choice" key={item.id} disabled={ocupado}>
           <legend>{item.estudiante.nombre} · {item.estudiante.codigo} · {item.estudiante.carrera}</legend>

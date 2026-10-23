@@ -57,6 +57,7 @@ export function AppShell() {
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#contenido">Saltar al contenido</a>
       <aside className="sidebar" aria-label="Navegación principal">
         <Logo />
         <div className="role-card">
@@ -95,7 +96,7 @@ export function AppShell() {
             <button className="button button--secondary" type="button" onClick={alCerrarSesion}>Cerrar sesión</button>
           </div>
         </header>
-        <main className="content">
+        <main className="content" id="contenido">
           <div className="page-heading">
             <div>
               <span className="eyebrow">{NOMBRES_ROL[usuario.rol]} · MiBeca</span>

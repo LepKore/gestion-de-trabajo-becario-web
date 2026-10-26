@@ -73,12 +73,6 @@
       "skillPath": "skills/firestore-rules-creation/SKILL.md",
       "computedHash": "49f99748e1c7e41c055a1c3ba06f4afc6888bf534588401cd6fb55ecd09f22b4"
     },
-    "spec-driven-development": {
-      "source": "addyosmani/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/spec-driven-development/SKILL.md",
-      "computedHash": "90a53ee823e49fd1518a01e6cf64968d4848bce3fc0b0115b1c19b7e5a87a5ca"
-    },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",

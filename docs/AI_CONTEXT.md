@@ -16,6 +16,33 @@ Integración basada en `backend/openapi.yaml` revisión **1.4.0**, archivo del b
 
 Las fechas se muestran y se introducen en `VITE_TIME_ZONE` (por defecto `America/La_Paz`). El formulario convierte la hora de esa zona a UTC para la API y convierte UTC de vuelta a la zona al editar. Valida fechas imposibles y horas inexistentes o ambiguas durante cambios de horario. `VITE_API_URL` permite apuntar al backend configurado; en desarrollo Vite reenvía `/api` a `http://127.0.0.1:3000` para usar cookies del mismo origen. El backend debe estar levantado con PostgreSQL local y migraciones aplicadas para el flujo real.
 
+## Spec Kit (Spec-Driven Development Toolkit)
+
+Spec Kit (github.com/github/spec-kit, v1.2.4.dev0) es el marco de trabajo SDD del proyecto, instalado el 26-10-2026. Reemplaza la skill `spec-driven-development` (eliminada).
+
+**¿Qué es?** Un CLI `specify` + directorio `.specify/` con plantillas y comandos slash. No es un agente: los agentes leen los archivos de `.specify/` y los siguen.
+
+**Comandos slash disponibles en OpenCode:**
+- `/speckit.constitution` — Principios gobernantes del proyecto
+- `/speckit.specify` — Crear especificación (.specify/spec.md)
+- `/speckit.clarify` — Aclarar áreas ambiguas (opcional, antes de /speckit.plan)
+- `/speckit.plan` — Plan técnico (.specify/plan.md)
+- `/speckit.tasks` — Lista de tareas (.specify/tasks.md)
+- `/speckit.analyze` — Análisis de consistencia entre artifacts (opcional)
+- `/speckit.checklist` — Checklist de calidad (opcional)
+- `/speckit.implement` — Ejecutar implementación
+- `/speckit.converge` — Evaluar codebase y añadir tareas pendientes
+
+**Estructura:** `.specify/` contiene `templates/` (spec-template.md, plan-template.md, tasks-template.md, constitution-template.md, checklist-template.md), `scripts/powershell/`, `workflows/speckit/workflow.yml`, `memory/constitution.md` (plantilla sin completar), `integrations/opencode.manifest.json` y `integration.json`.
+
+**Flujo:** constitution → specify → clarify → plan → tasks → analyze → implement. Cada fase se guarda en `.specify/` y requiere aprobación humana antes de pasar a la siguiente.
+
+**Comandos CLI:** `specify --version`, `specify check`, `specify init . --here --integration opencode --force --non-interactive`.
+
+**Relación con el flujo existente:** El plan canónico del proyecto es `docs/PLAN_MVP_MIBECA.md`. Spec Kit complementa el flujo de desarrollo (especificación → plan → tareas → implementación) pero no reemplaza los documentos del proyecto. Los artifacts de Spec Kit (.specify/spec.md, .specify/plan.md) son para trabajo nuevo no cubierto por el plan existente.
+
+**Instalación:** `uv tool install specify-cli --from git+https://github.com/github/spec-kit.git`. Requiere `uv` (instalar con `Invoke-WebRequest -Uri https://astral.sh/uv/install.ps1 -OutFile $env:TEMP\uv.ps1; . $env:TEMP\uv.ps1`).
+
 ## Verificación y límites
 
 El 19-10-2026 se ejecutaron `npm run lint`, `npm run build` y `npm test`: 19 pruebas aprobadas. Las pruebas de fase 4 cubren marcado exhaustivo, clave estable en reintento, encabezado de idempotencia y visualización de ausencias. El coordinador verificó el flujo real en Chromium contra API y PostgreSQL de prueba local: cierre explícito, 276 minutos para asistente, cero para ausente, progreso e historial de ambos roles becarios, sin desbordamiento a 390 px ni errores JavaScript. También publicó un trabajo el mismo día con hora futura de Bolivia; la API recibió UTC correcto y la edición mostró las mismas horas locales. No hay despliegue en esta etapa.

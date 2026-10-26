@@ -11,7 +11,7 @@ esa fase ANTES de escribir o modificar código.
 
 ## Skills locales (solo estas se nombran)
 
-`mibeca-web-sdd-router` (esta), `spec-driven-development`, `vercel-react-best-practices`,
+`mibeca-web-sdd-router` (esta), `vercel-react-best-practices`,
 `vitest`, `api-integration-contract`, `frontend-accessibility`, `firebase-hosting-basics`.
 
 - **Si ninguna local encaja**: solo entonces analiza las skills globales disponibles
@@ -25,7 +25,7 @@ esa fase ANTES de escribir o modificar código.
 
 | Instrucción típica | Skills locales a cargar |
 |---|---|
-| "implementa / añade la pantalla o funcionalidad X" | Sin spec previa: `spec-driven-development` desde fase Specify; con spec o "tarea N": implementación. Siempre añadir `vercel-react-best-practices` para los componentes y `api-integration-contract` si la pantalla consume la API (rutas solo en `src/api/endpoints.js`). Para accesibilidad y responsive: `frontend-accessibility`. |
+| "implementa / añade la pantalla o funcionalidad X" | Sin spec previa: usar los comandos slash de Spec Kit (`/speckit.specify` → `/speckit.plan` → `/speckit.tasks` → `/speckit.implement`). Con spec o "tarea N": implementación. Siempre añadir `vercel-react-best-practices` para los componentes y `api-integration-contract` si la pantalla consume la API (rutas solo en `src/api/endpoints.js`). Para accesibilidad y responsive: `frontend-accessibility`. |
 | "modifica un endpoint consumido / formularios / errores de la API / sesiones" | `api-integration-contract` (no crear contratos paralelos; anotar la revisión del contrato del backend usada). Si el cambio toca componentes, añadir `frontend-accessibility`. |
 | "arregla este bug / fallan los tests" | Si toca API: `api-integration-contract`. Si toca componentes o estilos: `frontend-accessibility`. Las pruebas corren con `vitest` en `npm test`. Prueba de regresión primero. |
 | "despliega / publica el frontend" | `firebase-hosting-basics` SOLO con tarea expresa del responsable: el `AGENTS.md` prohíbe publicar o acceder a servicios externos por iniciativa propia. Conservar la configuración Firebase y los workflows actuales. |

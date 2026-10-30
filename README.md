@@ -12,6 +12,14 @@ npm test
 npm run build
 ```
 
+Tras `npm ci`, activa el hook local que revisa secretos antes de commitear:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Los hooks locales no sustituyen los controles compartidos en GitHub.
+
 Firebase Hosting publica `dist`; los workflows conservan vista previa en PR y publicación live desde `main`. Antes de cada deploy ejecutan `npm ci`, lint, pruebas, build y una comprobación de salud de API. La CI de frontend también valida PR y las ramas `main`, `dev` y `sergio`. Define la variable pública de repositorio `VITE_API_URL` con el formato `https://api.midominio.edu/api/v1`; el workflow detiene el despliegue si falta o si `/ready` no responde. CORS del backend debe permitir el origen web exacto.
 
 Para usar cookies de sesión en producción, el frontend y la API deben compartir un dominio de sitio configurado, CORS debe permitir el origen exacto y el backend debe usar `SESSION_SAME_SITE=none` junto con `COOKIE_SECURE=true` si la topología es cross-site. Firebase `web.app` y Supabase `supabase.co` son sitios distintos; políticas del navegador pueden bloquear cookies de terceros aunque SameSite y CORS estén configurados. No se declara autenticación de producción hasta verificarla con los dominios reales.

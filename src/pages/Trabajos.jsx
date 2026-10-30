@@ -34,10 +34,10 @@ export function Trabajos({ modo = 'disponibles' }) {
   const [q, setQ] = useState('')
   const [busqueda, setBusqueda] = useState('')
   const [estado, setEstado] = useState(modo === 'disponibles' ? 'PUBLICADO' : '')
-  const propios = modo === 'propios' || modo === 'postulantes'
+  const propios = modo === 'propios'
   const recurso = useRecurso(propios ? RUTAS.trabajos.propios : RUTAS.trabajos.lista, { page: pagina, pageSize: 20, q, estado })
   return <section className="panel">
-    <header className="panel-head"><h2>{modo === 'postulantes' ? 'Elige un trabajo para gestionar sus postulantes' : propios ? 'Trabajos a tu cargo' : 'Consulta de trabajos'}</h2>
+    <header className="panel-head"><h2>{propios ? 'Trabajos a tu cargo' : 'Consulta de trabajos'}</h2>
       {propios && <Link className="button button--primary" to="/mis-trabajos/nuevo">Publicar trabajo</Link>}
     </header>
     <p>Fechas en {ZONA_UNIVERSITARIA}. Una postulación pendiente no reserva cupo.</p>
@@ -49,7 +49,7 @@ export function Trabajos({ modo = 'disponibles' }) {
     <EstadoCarga recurso={recurso}>{({ data, meta }) => <>
       {data.length === 0 ? <EmptyState title="Sin trabajos">No hay trabajos que coincidan con los filtros.</EmptyState> : data.map((trabajo) => <article className="panel" key={trabajo.id}>
         <h3><Link to={`/trabajos/${trabajo.id}`}>{trabajo.titulo}</Link></h3><DatosTrabajo trabajo={trabajo} />
-        <Link className="button button--secondary" to={`/trabajos/${trabajo.id}`}>{propios ? 'Ver trabajo y postulantes' : 'Ver detalle'}</Link>
+        <Link className="button button--secondary" to={`/trabajos/${trabajo.id}`}>{propios ? 'Ver trabajo' : 'Ver detalle'}</Link>
       </article>)}
       <Paginacion meta={meta} cambiar={setPagina} />
     </>}</EstadoCarga>
@@ -88,48 +88,11 @@ function DetalleContenido({ trabajo, recargar }) {
       {error && <Alert tipo="error">{error}</Alert>}
       {postulado && <Alert conRol={false}>Postulación enviada. Consulta su estado en Mis postulaciones.</Alert>}
       {usuario.rol === 'BECARIO' && <><button className="button button--primary" disabled={ocupado || postulado || !proximo || trabajo.cuposDisponibles <= 0} onClick={postular}>{ocupado ? 'Enviando…' : 'Postularme'}</button> <Link to="/mis-postulaciones">Mis postulaciones</Link></>}
-      {propio && (proximo && trabajo.aceptados === 0 ? <Link className="button button--secondary" to={`/mis-trabajos/${trabajo.id}/editar`}>Editar trabajo</Link> : <p>Las condiciones solo se pueden editar antes del inicio y antes de la primera aceptación.</p>)}
+      {propio && <div className="row-actions">{proximo && trabajo.aceptados === 0 ? <Link className="button button--secondary" to={`/mis-trabajos/${trabajo.id}/editar`}>Editar trabajo</Link> : <p>Las condiciones solo se pueden editar antes del inicio y antes de la primera aceptación.</p>}<Link className="button button--secondary" to={`/postulaciones?trabajo=${trabajo.id}`}>Gestionar postulantes</Link></div>}
     </section>
     {propio && trabajo.estado === 'PUBLICADO' && trabajo.faseTemporal === 'FINALIZADO' && <FormularioCierre trabajo={trabajo} actualizarTrabajo={recargar} />}
-    {propio && trabajo.estado === 'CERRADO' && <AsistenciaCerrada trabajoId={trabajo.id} />}
-    {propio && <Postulantes trabajo={trabajo} actualizarTrabajo={recargar} />}
+    {propio && trabajo.estado === 'CERRADO' && <AsistenciaCerrada trabajoId={trabajo.id} trabajoEstado={trabajo.estado} />}
   </>
-}
-function Postulantes({ trabajo, actualizarTrabajo }) {
-  const [pagina, setPagina] = useState(1)
-  const [estado, setEstado] = useState('')
-  const [decision, setDecision] = useState(null)
-  const [ocupado, setOcupado] = useState(false)
-  const [error, setError] = useState('')
-  const recurso = useRecurso(RUTAS.trabajos.postulaciones(trabajo.id), { page: pagina, pageSize: 20, estado })
-  async function decidir() {
-    setOcupado(true); setError('')
-    try { await postulacionesApi.decidir(decision.id, decision.accion); setDecision(null); actualizarTrabajo() }
-    catch (fallo) { setError(fallo.message); recurso.recargar() }
-    finally { setOcupado(false) }
-  }
-  return <section className="panel"><h2>Postulantes</h2>
-    <FiltroPostulacion estado={estado} cambiar={(valor) => { setEstado(valor); setPagina(1); setDecision(null) }} />
-    {error && <Alert tipo="error">{error}</Alert>}
-    {decision && <div className="alert alert--warning" role="alert"><p>Vas a {decision.accion === 'accept' ? 'aceptar' : 'rechazar'} a {decision.nombre}. Esta decisión no se puede revertir.</p><div className="row-actions">
-      <button className="button button--primary" disabled={ocupado} onClick={decidir}>{decision.accion === 'accept' ? 'Confirmar aceptación' : 'Confirmar rechazo'}</button>
-      <button className="button button--secondary" disabled={ocupado} onClick={() => setDecision(null)}>Cancelar</button>
-    </div></div>}
-    <EstadoCarga recurso={recurso}>{({ data, meta }) => <>
-      {data.length === 0 ? <EmptyState title="Sin postulaciones">Todavía no hay postulaciones con este estado.</EmptyState> : <>
-        <div className="table-scroll postulantes-table"><table><thead><tr><th>Nombre</th><th>Código</th><th>Carrera</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>{data.map((item) => <tr key={item.id}>
-        <th scope="row">{item.estudiante.nombre}</th><td>{item.estudiante.codigo}</td><td>{item.estudiante.carrera}</td><td>{item.estado}</td><td>
-          {item.estado === 'PENDIENTE' && trabajo.estado === 'PUBLICADO' && <div className="row-actions">{['accept', 'reject'].map((accion) => <button key={accion} className="button button--secondary" disabled={ocupado || (accion === 'accept' && (trabajo.faseTemporal !== 'PROXIMO' || trabajo.cuposDisponibles <= 0))} aria-label={`${accion === 'accept' ? 'Aceptar' : 'Rechazar'} a ${item.estudiante.nombre}`} onClick={() => setDecision({ id: item.id, nombre: item.estudiante.nombre, accion })}>{accion === 'accept' ? 'Aceptar' : 'Rechazar'}</button>)}</div>}
-        </td></tr>)}</tbody></table></div>
-        <div className="postulantes-cards">{data.map((item) => <article className="postulante-card" key={item.id}>
-          <h3>{item.estudiante.nombre}</h3>
-          <dl className="postulante-facts"><div><dt>Código</dt><dd>{item.estudiante.codigo}</dd></div><div><dt>Carrera</dt><dd>{item.estudiante.carrera}</dd></div><div><dt>Estado</dt><dd><span className="status status--info">{item.estado}</span></dd></div></dl>
-          {item.estado === 'PENDIENTE' && trabajo.estado === 'PUBLICADO' && <div className="row-actions">{['accept', 'reject'].map((accion) => <button key={accion} className="button button--secondary" disabled={ocupado || (accion === 'accept' && (trabajo.faseTemporal !== 'PROXIMO' || trabajo.cuposDisponibles <= 0))} aria-label={`${accion === 'accept' ? 'Aceptar' : 'Rechazar'} a ${item.estudiante.nombre}`} onClick={() => setDecision({ id: item.id, nombre: item.estudiante.nombre, accion })}>{accion === 'accept' ? 'Aceptar' : 'Rechazar'}</button>)}</div>}
-        </article>)}</div>
-      </>}
-      <Paginacion meta={meta} cambiar={setPagina} />
-    </>}</EstadoCarga>
-  </section>
 }
 function FiltroPostulacion({ estado, cambiar }) {
   return <Field label="Estado de postulación">{(props) => <select {...props} value={estado} onChange={(evento) => cambiar(evento.target.value)}><option value="">Todos</option>{['PENDIENTE', 'ACEPTADA', 'RECHAZADA'].map((valor) => <option key={valor}>{valor}</option>)}</select>}</Field>

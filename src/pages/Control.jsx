@@ -2,12 +2,9 @@
 import { Link } from 'react-router-dom'
 import { RUTAS, postulacionesApi, trabajosApi } from '../api/endpoints.js'
 import { useRecurso } from '../lib/useRecurso.js'
-import { fechaVisible, ZONA_UNIVERSITARIA } from '../lib/trabajos.js'
+import { fechaVisible, horas, ZONA_UNIVERSITARIA } from '../lib/trabajos.js'
 import { Alert, EmptyState, Metric } from '../components/ui.jsx'
-
-function horas(minutos) {
-  return new Intl.NumberFormat('es-BO', { maximumFractionDigits: 1 }).format(minutos / 60) + ' h'
-}
+import { ListaAsistenciaCerrada } from './Postulaciones.jsx'
 
 function EstadoCarga({ recurso, children }) {
   if (recurso.cargando) return <p className="loading" role="status">Cargando…</p>
@@ -38,6 +35,7 @@ export function ProgresoBecario() {
       <div className="progress-track" role="progressbar" aria-label="Progreso de horas acreditadas" aria-valuemin={0} aria-valuemax={data.targetMinutes || 1} aria-valuenow={Math.min(data.accreditedMinutes, data.targetMinutes || 1)}>
         <span style={{ width: `${data.targetMinutes > 0 ? Math.min(100, data.accreditedMinutes / data.targetMinutes * 100) : 0}%` }} />
       </div>
+      {data.accreditedMinutes === 0 && <Alert tipo="info" conRol={false}>Aún no tienes horas acreditadas. Tu progreso se actualizará cuando asistas a un trabajo cerrado.</Alert>}
       <p className="progress-caption">El progreso se calcula con las horas acreditadas al cerrar trabajos.</p>
     </>}</EstadoCarga>
   </section>
@@ -76,22 +74,11 @@ export function HistorialBecario() {
   </>
 }
 
-function ListaAsistencia({ attendance }) {
-  if (attendance.length === 0) return <p>No hubo estudiantes aceptados.</p>
-  return <div className="table-scroll"><table>
-    <thead><tr><th scope="col">Estudiante</th><th scope="col">Código</th><th scope="col">Carrera</th><th scope="col">Asistencia</th><th scope="col">Acreditadas</th></tr></thead>
-    <tbody>{attendance.map((item) => <tr key={item.applicationId}>
-      <th scope="row">{item.student.name}</th><td>{item.student.code}</td><td>{item.student.career}</td>
-      <td>{item.attended ? 'Asistió' : 'No asistió'}</td><td>{horas(item.awardedMinutes)}</td>
-    </tr>)}</tbody>
-  </table></div>
-}
-
-export function AsistenciaCerrada({ trabajoId }) {
+export function AsistenciaCerrada({ trabajoId, trabajoEstado }) {
   const recurso = useRecurso(RUTAS.trabajos.asistencia(trabajoId))
   return <section className="panel">
     <h2>Asistencia registrada</h2>
-    <EstadoCarga recurso={recurso}>{({ data }) => <ListaAsistencia attendance={data} />}</EstadoCarga>
+    <EstadoCarga recurso={recurso}>{({ data }) => <ListaAsistenciaCerrada attendance={data} trabajoEstado={trabajoEstado} onActualizar={recurso.recargar} />}</EstadoCarga>
   </section>
 }
 
@@ -115,6 +102,7 @@ export function FormularioCierre({ trabajo, actualizarTrabajo }) {
   const [cargando, setCargando] = useState(true)
   const [ocupado, setOcupado] = useState(false)
   const [hecho, setHecho] = useState(false)
+  const [intentoCarga, setIntentoCarga] = useState(0)
   const intento = useRef(null)
 
   useEffect(() => {
@@ -124,7 +112,15 @@ export function FormularioCierre({ trabajo, actualizarTrabajo }) {
       (fallo) => { if (vigente) { setError(fallo.message); setCargando(false) } },
     )
     return () => { vigente = false }
-  }, [trabajo.id])
+  }, [trabajo.id, intentoCarga])
+
+  // El reintento recarga aceptados, no el detalle: `trabajo.id` no cambia y el
+  // efecto anterior no volvería a dispararse por sí solo.
+  function reintentarAceptados() {
+    setCargando(true)
+    setError('')
+    setIntentoCarga((n) => n + 1)
+  }
 
   function marcar(id, asistio) {
     setMarcas((actual) => ({ ...actual, [id]: asistio }))
@@ -157,7 +153,7 @@ export function FormularioCierre({ trabajo, actualizarTrabajo }) {
     <p>Marca asistencia o ausencia de cada estudiante aceptado. Cada asistente recibirá {horas(trabajo.duracionMinutos)}. Esta decisión no se puede modificar desde la aplicación.</p>
     {cargando ? <p className="loading" role="status">Cargando estudiantes aceptados…</p> : <>
       {error && <Alert tipo="error">{error}</Alert>}
-      {aceptados === null ? <button className="button button--secondary" type="button" onClick={actualizarTrabajo}>Actualizar trabajo</button> : <form onSubmit={cerrar}>
+      {aceptados === null ? <button className="button button--secondary" type="button" onClick={reintentarAceptados}>Reintentar carga de aceptados</button> : <form onSubmit={cerrar}>
         {aceptados.length === 0 && <p>No hay estudiantes aceptados. Puedes cerrar el trabajo sin asistencias; las postulaciones pendientes serán rechazadas.</p>}
         <div className="attendance-list">{aceptados.map((item) => <fieldset className="attendance-choice" key={item.id} disabled={ocupado}>
           <legend>{item.estudiante.nombre} · {item.estudiante.codigo} · {item.estudiante.carrera}</legend>
@@ -199,7 +195,7 @@ export function CierreYHoras() {
         {data.length === 0 ? <EmptyState title="Sin trabajos cerrados">Los cierres confirmados aparecerán aquí con sus asistentes.</EmptyState> : data.map((item) => <article className="history-item" key={item.job.id}>
           <h3><Link to={`/trabajos/${item.job.id}`}>{item.job.titulo}</Link></h3>
           <p>Cerrado: {fechaVisible(item.closedAt)} · Duración: {horas(item.job.duracionMinutos)}</p>
-          <ListaAsistencia attendance={item.attendance} />
+          <ListaAsistenciaCerrada attendance={item.attendance} trabajoEstado={item.job.estado} onActualizar={historial.recargar} />
         </article>)}
         <Paginacion meta={meta} cambiar={setPaginaHistorial} />
       </>}</EstadoCarga>

@@ -29,3 +29,12 @@ describe('títulos de rutas de detalle', () => {
     expect(screen.getByText('MiBeca / Editar trabajo')).toBeInTheDocument()
   })
 })
+
+describe('salto al contenido', () => {
+  it('ofrece un enlace de salto que apunta al contenido principal', () => {
+    montar('/')
+    const salto = screen.getByRole('link', { name: 'Saltar al contenido' })
+    expect(salto).toHaveAttribute('href', '#contenido')
+    expect(document.querySelector('main')).toHaveAttribute('id', 'contenido')
+  })
+})

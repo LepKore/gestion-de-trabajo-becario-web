@@ -1,6 +1,6 @@
 // Endpoints de la API de MiBeca en un único lugar.
 //
-// Contrato de referencia: `backend/openapi.yaml`, revisión 1.3.0.
+// Contrato de referencia: `backend/openapi.yaml`, revisión 1.6.0 (backend local, pendiente de commit).
 // La sesión vive en una cookie HttpOnly; el token CSRF, las cookies y el
 // manejo de errores son responsabilidad de `src/lib/api.js`.
 //
@@ -39,6 +39,7 @@ export const RUTAS = {
     mias: '/me/applications',
     aceptar: (id) => `/applications/${trozo(id)}/accept`,
     rechazar: (id) => `/applications/${trozo(id)}/reject`,
+    evaluacion: (id) => `/applications/${trozo(id)}/evaluation`,
   },
   estudiantes: {
     progreso: '/students/progress',
@@ -48,6 +49,7 @@ export const RUTAS = {
     panel: '/me/dashboard',
     progreso: '/me/progress',
     historial: '/me/history',
+    rating: '/me/rating',
   },
 }
 
@@ -93,10 +95,33 @@ export const trabajosApi = {
 
 // --- Postulaciones --------------------------------------------------------
 
+// El contrato solo expone postulantes por trabajo; esta función recorre los
+// trabajos propios y devuelve una sola lista, cada postulación con su trabajo.
+async function todasLasDelTrabajo(trabajo) {
+  const postulaciones = []
+  for (let page = 1; ; page += 1) {
+    const { data, meta } = await apiRequest(RUTAS.trabajos.postulaciones(trabajo.id), {
+      query: { page, pageSize: 50 },
+    })
+    if (!meta) throw new Error('La API no devolvió paginación de postulaciones.')
+    postulaciones.push(...data)
+    if (page >= meta.totalPages) break
+  }
+  return postulaciones.map((postulacion) => ({ ...postulacion, trabajo }))
+}
+
 export const postulacionesApi = {
   listarDeTrabajo: (id, query) => apiRequest(RUTAS.trabajos.postulaciones(id), { query }),
   postular: (id) =>
     apiRequest(RUTAS.trabajos.postulaciones(id), { metodo: 'POST', cuerpo: {} }),
+  // shortcut: tope de 50 trabajos propios, paginar si un encargado supera ese número.
+  deMisTrabajos: async () => {
+    const { data: trabajos } = await apiRequest(RUTAS.trabajos.propios, {
+      query: { page: 1, pageSize: 50 },
+    })
+    const listas = await Promise.all(trabajos.map(todasLasDelTrabajo))
+    return listas.flat()
+  },
   decidir: (id, accion) => {
     if (accion !== 'accept' && accion !== 'reject') {
       throw new Error(`Decisión de postulación no válida: ${accion}`)
@@ -104,4 +129,6 @@ export const postulacionesApi = {
     const ruta = accion === 'accept' ? RUTAS.postulaciones.aceptar(id) : RUTAS.postulaciones.rechazar(id)
     return apiRequest(ruta, { metodo: 'POST', cuerpo: {} })
   },
+  crearEvaluacion: (postulacionId, cuerpo) =>
+    apiRequest(RUTAS.postulaciones.evaluacion(postulacionId), { metodo: 'POST', cuerpo }),
 }

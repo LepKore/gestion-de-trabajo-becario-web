@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { backendRoot, blocked } from '../.opencode/lib/docker-guard-rules.js'
 

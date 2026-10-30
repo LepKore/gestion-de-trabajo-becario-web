@@ -1,45 +1,116 @@
-:root {
-  /* Identidad visual MiBeca en azul marino #06175D. */
-  --brand: #06175d;
-  --brand-hover: #102779;
-  --brand-active: #041145;
-  --brand-soft: rgb(6 23 93 / 8%);
-  --nav-hover: rgb(255 255 255 / 12%);
-  --nav-active: rgb(255 255 255 / 18%);
-  --nav-border: rgb(255 255 255 / 20%);
-  --dialog-backdrop: rgb(16 17 20 / 48%);
-  --white: #ffffff;
-  --background: #f8f8fa;
-  --surface: #ffffff;
-  --field: #ffffff;
-  --text: #101114;
-  --text-muted: #686b82;
-  --border: #dedee5;
-  --focus: #06175d;
-  --success: #026b3f;
-  --success-bg: rgb(20 158 97 / 16%);
-  --warning: #805400;
-  --warning-bg: #fff3d8;
-  --error: #a12835;
-  --error-bg: #fff0f1;
-  --info: #484b5e;
-  --info-bg: rgb(104 107 130 / 12%);
-  --font-family: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --font-display: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --font-small: 0.875rem;
-  --font-base: 1rem;
-  --font-large: 1.125rem;
-  --font-title: clamp(1.8rem, 2.5vw, 2.35rem);
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --radius-small: 0.5rem;
-  --radius-medium: 0.75rem;
-  --radius-large: 0.75rem;
-  --shadow-card: 0 4px 24px rgb(0 0 0 / 3%);
-  --shadow-dialog: 0 12px 40px rgb(16 17 20 / 12%);
+/*
+ * Identidad visual MiBeca: sistema Material 3 del diseño institucional.
+ * Este es el único archivo donde se declaran colores literales; el resto de
+ * `src/` consume los tokens (var(--color-*) o clases de Tailwind).
+ */
+@theme {
+  /* Primario */
+  --color-primary: #000429;
+  --color-primary-container: #06175d;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #7683cb;
+  --color-primary-fixed: #dee1ff;
+  --color-primary-fixed-dim: #bac3ff;
+  --color-on-primary-fixed: #001159;
+  --color-on-primary-fixed-variant: #344185;
+  --color-surface-tint: #4c599f;
+
+  /* Secundario */
+  --color-secondary: #515f74;
+  --color-secondary-container: #d5e3fd;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #57657b;
+  --color-secondary-fixed: #d5e3fd;
+  --color-secondary-fixed-dim: #b9c7e0;
+  --color-on-secondary-fixed: #0d1c2f;
+  --color-on-secondary-fixed-variant: #3a485c;
+
+  /* Terciario */
+  --color-tertiary: #000913;
+  --color-tertiary-container: #002238;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #218ed2;
+  --color-tertiary-fixed: #cce5ff;
+  --color-tertiary-fixed-dim: #93ccff;
+  --color-on-tertiary-fixed: #001d31;
+  --color-on-tertiary-fixed-variant: #004b73;
+
+  /* Superficies */
+  --color-background: #f8f9ff;
+  --color-on-background: #0d1c2e;
+  --color-surface: #f8f9ff;
+  --color-on-surface: #0d1c2e;
+  --color-surface-dim: #ccdbf3;
+  --color-surface-bright: #f8f9ff;
+  --color-surface-variant: #d5e3fc;
+  --color-on-surface-variant: #454650;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface-container: #e6eeff;
+  --color-surface-container-high: #dce9ff;
+  --color-surface-container-highest: #d5e3fc;
+  --color-inverse-surface: #233144;
+  --color-inverse-on-surface: #eaf1ff;
+  --color-inverse-primary: #bac3ff;
+
+  /* Bordes y foco */
+  --color-outline: #767682;
+  --color-outline-variant: #c6c5d2;
+  --color-focus: #06175d;
+  --color-backdrop: rgb(13 28 46 / 75%);
+  --color-evaluation-surface: #eff4ff;
+  --color-evaluation-outline: #c6c5d2;
+
+  /* Estados */
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+  --color-success: #0f6b3f;
+  --color-success-container: #d7f5e3;
+  --color-on-success-container: #043f27;
+  --color-warning: #7a4f00;
+  --color-warning-container: #ffefc9;
+  --color-on-warning-container: #4a3000;
+  --color-neutral: #454650;
+  --color-neutral-container: #e6eeff;
+
+  /* Tipografía */
+  --font-body-sm: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body-md: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body-lg: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-tabular-number: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-headline-xl: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-headline-lg: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-headline-md: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-title-md: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-title-sm: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-label-sm: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-label-md: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  /* Forma y elevación */
+  --radius-card: 0.75rem;
+  --radius-chip: 0.5rem;
+  --shadow-card: 0 1px 8px rgb(13 28 46 / 5%);
+  --shadow-raised: 0 4px 20px rgb(13 28 46 / 8%);
+  --shadow-dialog: 0 24px 60px rgb(13 28 46 / 25%);
+}
+
+/* Iconografía Material Symbols cargada desde index.html. */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }

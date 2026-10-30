@@ -242,6 +242,8 @@ function main() {
   }
   const visibles = info ? hallazgos : hallazgos.filter((f) => f.sev !== "info");
   globalThis.process.stdout.write(`${tablaTexto(visibles)}\n`);
+  // Gate de CI: un hallazgo "deny" debe romper el pipeline, no solo informar.
+  if (visibles.some((f) => f.sev === "deny")) globalThis.process.exitCode = 1;
 }
 
 /** Solo se ejecuta como programa: al importarlo (tests) no hace nada. */

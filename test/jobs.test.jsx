@@ -57,32 +57,6 @@ it('presenta los datos del trabajo como bloques etiquetados y no como texto corr
   expect(screen.getByText('Cupos')).toBeInTheDocument()
   expect(screen.getByText('Encargado')).toBeInTheDocument()
 })
-it('mantiene visibles las acciones de postulantes también en la tarjeta móvil', async () => {
-  const postulacion = { id: 'app', estado: 'PENDIENTE', estudiante: { nombre: 'Luis', codigo: '00123', carrera: 'Sistemas' } }
-  apiRequest.mockImplementation(async ruta => {
-    if (ruta === '/jobs/job') return { data: trabajo }
-    if (ruta === '/jobs/job/applications') return lista([postulacion])
-  })
-  montar(null, '/trabajos/job')
-  expect(await screen.findAllByText('Luis')).toHaveLength(2)
-  expect(screen.getAllByRole('button', { name: 'Aceptar a Luis' })).toHaveLength(2)
-  expect(screen.getAllByRole('button', { name: 'Rechazar a Luis' })).toHaveLength(2)
-  expect(screen.getAllByText('Código')).toHaveLength(2)
-  expect(screen.getAllByText('Carrera')).toHaveLength(2)
-})
-it('propietario confirma una aceptación irreversible', async () => {
-  const postulacion = { id: 'app', estado: 'PENDIENTE', estudiante: { nombre: 'Luis', codigo: '00123', carrera: 'Sistemas' } }
-  apiRequest.mockImplementation(async (ruta, opciones) => {
-    if (ruta === '/jobs/job') return { data: trabajo }
-    if (ruta === '/jobs/job/applications') return lista([postulacion])
-    if (opciones?.metodo === 'POST') return { data: { ...postulacion, estado: 'ACEPTADA' } }
-  })
-  montar(null, '/trabajos/job')
-  fireEvent.click((await screen.findAllByRole('button', { name: 'Aceptar a Luis' }))[0])
-  expect(apiRequest).not.toHaveBeenCalledWith('/applications/app/accept', expect.anything())
-  fireEvent.click(screen.getByRole('button', { name: 'Confirmar aceptación' }))
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('/applications/app/accept', { metodo: 'POST', cuerpo: {} }))
-})
 it('administrador consulta sin acciones ni datos de postulantes', async () => {
   rolActual = 'ADMIN'
   apiRequest.mockResolvedValue({ data: trabajo })

@@ -2,20 +2,32 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth.js'
 import { Alert, Metric } from '../components/ui.jsx'
 import { useRecurso } from '../lib/useRecurso.js'
+import { fechaVisible, ratingVisible } from '../lib/trabajos.js'
+import { NOMBRES_ROL } from '../config/navegacion.js'
 import { RUTAS } from '../api/endpoints.js'
 import { ProgresoBecario } from './Control.jsx'
 
 function EstadoCarga({ recurso, children }) {
   if (recurso.cargando) return <p className="loading" role="status">Cargando resumen…</p>
-  if (recurso.error) return <Alert tipo="error">No se pudo cargar este resumen: {recurso.error}</Alert>
+  if (recurso.error) return <>
+    <Alert tipo="error">No se pudo cargar este resumen: {recurso.error}</Alert>
+    <button className="button button--secondary" type="button" onClick={recurso.recargar}>Reintentar</button>
+  </>
   return children(recurso.respuesta)
 }
 
 function PanelBecario() {
   const total = useRecurso(RUTAS.postulaciones.mias, { page: 1, pageSize: 1 })
   const pendientes = useRecurso(RUTAS.postulaciones.mias, { estado: 'PENDIENTE', page: 1, pageSize: 1 })
+  const rating = useRecurso(RUTAS.yo.rating)
   return <>
     <ProgresoBecario />
+    <section className="panel" aria-labelledby="titulo-rating-general">
+      <header className="panel-head"><div><h2 id="titulo-rating-general">Rating general</h2><p>Promedio de evaluaciones disponibles de tus últimos trabajos realizados.</p></div></header>
+      <EstadoCarga recurso={rating}>{({ data }) => data.rating === null
+        ? <Alert tipo="info" conRol={false}>faltan realizar trabajos</Alert>
+        : <Metric label="Rating general" value={ratingVisible(data.rating)} hint={`${data.evaluacionesConsideradas} evaluaciones consideradas en ${data.trabajosRealizados} trabajos realizados`} />}</EstadoCarga>
+    </section>
     <section className="panel">
       <header className="panel-head"><h2>Postulaciones e historial</h2><Link className="button button--secondary" to="/mis-postulaciones">Ver postulaciones</Link></header>
       <div className="metrics metrics--summary">
@@ -73,7 +85,7 @@ export function Panel() {
   return (
     <>
       <div className="metrics">
-        <Metric label="Rol" value={usuario.rol} hint="El rol se define al crear la cuenta y no se modifica." />
+        <Metric label="Rol" value={NOMBRES_ROL[usuario.rol]} hint="El rol se define al crear la cuenta y no se modifica." />
         <Metric label="Estado de la cuenta" value={usuario.activo ? 'Activa' : 'Inactiva'} tone={usuario.activo ? 'success' : 'neutral'} hint={usuario.activo ? 'Puedes iniciar sesión.' : 'Contacta a la administración.'} />
         <Metric label="Contraseña" value={usuario.requiereCambioPassword ? 'Temporal' : 'Definida'} tone={usuario.requiereCambioPassword ? 'warning' : 'success'} hint={usuario.requiereCambioPassword ? 'Debes cambiarla para usar el sistema.' : 'No requiere cambios.'} />
         {perfil && <Metric label={usuario.estudiante ? 'Meta semestral' : 'Contexto'} value={usuario.estudiante ? `${metaSemestralHoras} h` : usuario.encargado.contextoTipo} hint={usuario.estudiante ? `${contexto} · Las horas se acumulan al cerrar trabajos.` : contexto} />}
@@ -90,7 +102,7 @@ export function Panel() {
           <dl className="detail-list">
             <div><dt>Nombre</dt><dd>{usuario.nombre}</dd></div>
             <div><dt>Correo</dt><dd>{usuario.correo}</dd></div>
-            <div><dt>Rol</dt><dd>{usuario.rol}</dd></div>
+            <div><dt>Rol</dt><dd>{NOMBRES_ROL[usuario.rol]}</dd></div>
             {usuario.estudiante && (
               <>
                 <div><dt>Código de estudiante</dt><dd>{usuario.estudiante.codigo}</dd></div>
@@ -103,7 +115,7 @@ export function Panel() {
                 <div><dt>Contexto</dt><dd>{usuario.encargado.contextoNombre}</dd></div>
               </>
             )}
-            <div><dt>Cuenta creada</dt><dd>{new Date(usuario.creadoEn).toLocaleString('es-CO')}</dd></div>
+            <div><dt>Cuenta creada</dt><dd>{fechaVisible(usuario.creadoEn)}</dd></div>
           </dl>
         </div>
       </section>

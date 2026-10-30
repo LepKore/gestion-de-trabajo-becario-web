@@ -1,5 +1,9 @@
-// Contrato backend OpenAPI 1.2.0 (borrador no fijado).
+// Contrato backend OpenAPI 1.6.0 (backend local, pendiente de commit).
 export const ZONA_UNIVERSITARIA = import.meta.env.VITE_TIME_ZONE || 'America/La_Paz'
+
+export function horas(minutos) {
+  return `${new Intl.NumberFormat('es-BO', { maximumFractionDigits: 1 }).format(minutos / 60)} h`
+}
 
 export function horasAMinutos(valor) {
   const texto = String(valor).trim().replace(',', '.')
@@ -51,4 +55,20 @@ export function fechaUTC(valor, zona = ZONA_UNIVERSITARIA, preferido) {
   if (candidatos.length === 0) throw new Error(`Esta hora no existe en ${zona}.`)
   if (candidatos.length > 1) throw new Error(`Esta hora es ambigua en ${zona}; elige otra hora.`)
   return new Date(candidatos[0]).toISOString()
+}
+
+export const CRITERIOS_EVALUACION = [
+  ['responsabilidad', 'Responsabilidad'],
+  ['puntualidad', 'Puntualidad'],
+  ['proactividad', 'Proactividad'],
+  ['comunicacion', 'Comunicación'],
+]
+
+export function validarEvaluacion(valor) {
+  const numero = Number(valor)
+  return Number.isInteger(numero) && numero >= 1 && numero <= 5
+}
+
+export function ratingVisible(valor) {
+  return valor === null || valor === undefined ? 'Sin rating general' : `${Number(valor).toFixed(1)} / 5`
 }

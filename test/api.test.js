@@ -1,5 +1,7 @@
+// `apiRequest` usa window.location.origin: este archivo necesita jsdom.
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, apiRequest, guardarCsrfToken } from '../src/lib/api.js'
+import { CRITERIOS_EVALUACION, ratingVisible, validarEvaluacion } from '../src/lib/trabajos.js'
 
 describe('cliente API', () => {
   beforeEach(() => {
@@ -69,4 +71,55 @@ it('envía la clave de idempotencia en el cierre', async () => {
   )
   fetchMock.mockRestore()
   guardarCsrfToken(null)
+})
+
+describe('respuestas del contrato y errores', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    guardarCsrfToken(null)
+  })
+
+  it('expone los detalles por campo de un 422', async () => {
+    const detalles = [{ campo: 'correo', mensaje: 'Ya está registrado.' }]
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(
+      JSON.stringify({ error: { code: 'validation_error', message: 'Revisa los datos.', detalles } }),
+      { status: 422, headers: { 'Content-Type': 'application/json' } },
+    ))
+    await expect(apiRequest('/admin/users', { metodo: 'POST', cuerpo: {} })).rejects.toMatchObject({
+      estado: 422, code: 'validation_error', detalles,
+    })
+  })
+
+  it('acepta un 204 sin cuerpo', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 204 }))
+    await expect(apiRequest('/auth/logout', { metodo: 'POST' })).resolves.toBeNull()
+  })
+
+  it('da un error estable si un 500 llega sin JSON', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('<html>error</html>', { status: 500 }))
+    await expect(apiRequest('/auth/me')).rejects.toMatchObject({ estado: 500, code: 'error_desconocido' })
+  })
+
+  it('no envía CSRF en lecturas', async () => {
+    guardarCsrfToken('csrf-de-prueba')
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{"data":{}}', { status: 200 }))
+    await apiRequest('/auth/me')
+    expect(fetchMock.mock.calls[0][1].headers['X-CSRF-Token']).toBeUndefined()
+  })
+})
+
+describe('contrato de evaluaciones', () => {
+  it('define los cuatro criterios y formatea rating nulo', () => {
+    expect(CRITERIOS_EVALUACION).toHaveLength(4)
+    expect(ratingVisible(null)).toBe('Sin rating general')
+    expect(ratingVisible(4.5)).toBe('4.5 / 5')
+  })
+
+  it('valida valores enteros del uno al cinco', () => {
+    expect(validarEvaluacion(1)).toBe(true)
+    expect(validarEvaluacion(5)).toBe(true)
+    expect(validarEvaluacion(0)).toBe(false)
+    expect(validarEvaluacion(2.5)).toBe(false)
+    expect(validarEvaluacion('x')).toBe(false)
+  })
 })

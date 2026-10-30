@@ -40,7 +40,7 @@ Como becario de la UPB, quiero consultar trabajos disponibles, postularme y ver 
 
 ---
 
-### User Story 2 - Publicar y administrar trabajos (Priority: P1)
+### User Story 2 - Publicar, cerrar y evaluar trabajos (Priority: P1)
 
 Como encargado, quiero publicar trabajos becarios, revisar postulaciones, seleccionar participantes, registrar quién asistió y calificar a los becarios asistentes para controlar la actividad.
 
@@ -146,6 +146,37 @@ ni operaciones para consultar o modificar registros de auditoría.
 - **SC-006**: Las consultas habituales de trabajos y progreso muestran un resultado o un estado vacío en un máximo de 3 segundos bajo la carga de demostración acordada.
 - **SC-007**: El 100% de las evaluaciones válidas conserva los cuatro criterios y no cambia las horas acreditadas ni el progreso del becario.
 - **SC-008**: El promedio visible coincide con las evaluaciones disponibles de los últimos 10 trabajos realizados y muestra `faltan realizar trabajos` cuando aún no existen 10.
+
+### Measurement Protocol
+
+- **SC-001** se mide con al menos 10 becarios de prueba activos; se registra el tiempo
+  desde la apertura del listado de trabajos hasta el envío exitoso de la postulación.
+- **SC-002** y **SC-007** se verifican con al menos 20 cierres y evaluaciones válidas,
+  incluyendo reintentos y solicitudes duplicadas; se comparan asistencia, minutos
+  acreditados y los cuatro criterios antes y después de cada operación.
+- **SC-003** se mide con al menos 10 registros de becarios con estados mixtos de
+  cumplimiento; el tiempo comienza al abrir supervisión y termina al identificar ambos
+  grupos.
+- **SC-004** se verifica ejecutando cada operación protegida con un rol no autorizado y
+  con un encargado que no es propietario del trabajo; todas deben responder con rechazo.
+- **SC-005** se valida mediante recorrido completo de teclado en las pantallas principales
+  y viewport móvil y de escritorio, comprobando etiquetas, foco visible y mensajes
+  asociados.
+- **SC-006** se mide bajo la carga de demostración definida por el backend, registrando el
+  tiempo desde la solicitud hasta un resultado o estado vacío; no se considera válida una
+  respuesta parcial sin estado de carga o error.
+- **SC-008** se verifica con escenarios de 0, 9, 10 y más de 10 trabajos realizados,
+  incluyendo trabajos sin evaluación y empates en el tiempo de cierre.
+
+### Terminology
+
+- **Evaluación**: registro individual e inmutable de los cuatro criterios de un becario
+  asistente en un trabajo cerrado. Su resultado visible se etiqueta `Promedio de evaluación`.
+- **Rating general**: promedio agregado que `GET /me/rating` calcula sobre evaluaciones
+  disponibles de los últimos 10 trabajos realizados.
+- En la interfaz y documentación se usa `evaluación` para el registro individual y
+  `rating general` únicamente para el agregado; `evaluation` y `rating` quedan reservados
+  para nombres de campos del contrato API.
 
 ## Assumptions
 

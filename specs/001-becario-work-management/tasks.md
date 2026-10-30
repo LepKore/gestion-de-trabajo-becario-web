@@ -141,6 +141,10 @@ respuesta y la interfaz no muestran campos de evaluación.
 - [X] T033 [P] Run the frontend accessibility and contract audit over changed files using the repository audit tooling in `src/` and `test/`
 - [X] T034 Update `AI_CONTEXT.md` with the verified frontend/backend contract revision and completed feature status in `AI_CONTEXT.md`
 
+## Phase 7: Convergence
+
+- [X] T035 Resolve the incomplete backend dependency reported by `mibeca-backend-sync`, then re-verify the OpenAPI contract and synchronized task queues before further web integration per Constitution II (contradicts)
+
 ---
 
 ## Dependencies & Execution Order

@@ -39,6 +39,7 @@ export const RUTAS = {
     mias: '/me/applications',
     aceptar: (id) => `/applications/${trozo(id)}/accept`,
     rechazar: (id) => `/applications/${trozo(id)}/reject`,
+    evaluacion: (id) => `/applications/${trozo(id)}/evaluation`,
   },
   estudiantes: {
     progreso: '/students/progress',
@@ -48,6 +49,7 @@ export const RUTAS = {
     panel: '/me/dashboard',
     progreso: '/me/progress',
     historial: '/me/history',
+    rating: '/me/rating',
   },
 }
 
@@ -127,4 +129,6 @@ export const postulacionesApi = {
     const ruta = accion === 'accept' ? RUTAS.postulaciones.aceptar(id) : RUTAS.postulaciones.rechazar(id)
     return apiRequest(ruta, { metodo: 'POST', cuerpo: {} })
   },
+  crearEvaluacion: (postulacionId, cuerpo) =>
+    apiRequest(RUTAS.postulaciones.evaluacion(postulacionId), { metodo: 'POST', cuerpo }),
 }

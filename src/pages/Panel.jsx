@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth.js'
 import { Alert, Metric } from '../components/ui.jsx'
 import { useRecurso } from '../lib/useRecurso.js'
-import { fechaVisible } from '../lib/trabajos.js'
+import { fechaVisible, ratingVisible } from '../lib/trabajos.js'
 import { NOMBRES_ROL } from '../config/navegacion.js'
 import { RUTAS } from '../api/endpoints.js'
 import { ProgresoBecario } from './Control.jsx'
@@ -16,8 +16,15 @@ function EstadoCarga({ recurso, children }) {
 function PanelBecario() {
   const total = useRecurso(RUTAS.postulaciones.mias, { page: 1, pageSize: 1 })
   const pendientes = useRecurso(RUTAS.postulaciones.mias, { estado: 'PENDIENTE', page: 1, pageSize: 1 })
+  const rating = useRecurso(RUTAS.yo.rating)
   return <>
     <ProgresoBecario />
+    <section className="panel" aria-labelledby="titulo-rating-general">
+      <header className="panel-head"><div><h2 id="titulo-rating-general">Rating general</h2><p>Promedio de evaluaciones disponibles de tus últimos trabajos realizados.</p></div></header>
+      <EstadoCarga recurso={rating}>{({ data }) => data.rating === null
+        ? <Alert tipo="info">{data.message || 'faltan realizar trabajos'}</Alert>
+        : <Metric label="Rating general" value={ratingVisible(data.rating)} hint={`${data.evaluacionesConsideradas} evaluaciones consideradas en ${data.trabajosRealizados} trabajos realizados`} />}</EstadoCarga>
+    </section>
     <section className="panel">
       <header className="panel-head"><h2>Postulaciones e historial</h2><Link className="button button--secondary" to="/mis-postulaciones">Ver postulaciones</Link></header>
       <div className="metrics metrics--summary">

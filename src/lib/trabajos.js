@@ -56,3 +56,19 @@ export function fechaUTC(valor, zona = ZONA_UNIVERSITARIA, preferido) {
   if (candidatos.length > 1) throw new Error(`Esta hora es ambigua en ${zona}; elige otra hora.`)
   return new Date(candidatos[0]).toISOString()
 }
+
+export const CRITERIOS_EVALUACION = [
+  ['responsabilidad', 'Responsabilidad'],
+  ['puntualidad', 'Puntualidad'],
+  ['proactividad', 'Proactividad'],
+  ['comunicacion', 'Comunicación'],
+]
+
+export function validarEvaluacion(valor) {
+  const numero = Number(valor)
+  return Number.isInteger(numero) && numero >= 1 && numero <= 5
+}
+
+export function ratingVisible(valor) {
+  return valor === null || valor === undefined ? 'Sin rating general' : `${Number(valor).toFixed(1)} / 5`
+}

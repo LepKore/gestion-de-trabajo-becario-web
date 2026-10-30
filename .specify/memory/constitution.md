@@ -1,50 +1,45 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+- Version change: 1.0.0 → 1.1.0
+- Added sections: Monorepo Synergy and Synchronized Task Progression
+- Modified principles: Added explicit governance rules for multi-repository coordination between frontend (gestion-de-trabajo-becario-web) and backend (gestion-de-trabajo-becario-backend)
+- Follow-up TODOs: Ensure both repositories reference or align with this multi-repo synchronization rule.
+-->
+
+# MiBeca Dual-Repository Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Unified Product Contract
+Frontend and backend repositories must operate as a cohesive dual-repository system (`gestion-de-trabajo-becario-web` and `gestion-de-trabajo-becario-backend`). API contracts, schemas, and interface definitions are canonical and shared; neither repository may define independent, conflicting mock contracts once integration is underway.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Synchronized Cross-Repository Progression
+Development across web and backend repositories MUST proceed in a coordinated manner. When a spec or task in one repository is blocked by an incomplete task in the other repository, developers MUST pivot to advancing the blocking repository's task queue until unblocked. 
+- *Rule:* If Web Task N cannot continue because Backend Task M is incomplete, and Backend Task M requires preceding tasks, continue sequentially on backend tasks until backend progress is blocked by a web dependency, and vice-versa.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Test-First & Quality Gates (NON-NEGOTIABLE)
+All features, contract integrations, and bug fixes MUST adhere to test-driven development and strict quality gates (`npm run lint`, `npm run build`, and unit/integration tests). No bypassing of checks, lint suppressions, or stubbing without tests is permitted.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Canonical API & Theme Alignment
+The frontend MUST consume the backend API through declared endpoints (`src/api/endpoints.js` in the web repo) and use shared styling variables (`src/styles/theme.css`), maintaining complete accessibility and mobile-responsive standards.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Simplicity, YAGNI & Incremental Delivery
+Deliver work in thin, verifiable, atomic slices. Avoid over-engineering, unrequested abstractions, or parallel custom specs. Every component or endpoint must directly serve the MVP plan.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Inter-Repository Coordination & Workflow
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+Frontend and backend repositories share a interdependent delivery pipeline. Coordination rules:
+1. **Dependency Blocking Rule:** Cross-project dependencies dictate immediate task switching. Never idle when blocked by another repository's incomplete dependency; switch context to the blocking repository to unblock the critical path.
+2. **Version Alignment:** Major milestone specifications must be synchronized across both repositories to ensure feature parity and contract consistency.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Development Standards & Review Process
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+1. **Code Review & Quality:** All changes must pass linting, type checking, and test suites locally before PR submission.
+2. **Security & Auth:** Backend enforces actual authorization and role security; frontend respects these permissions without client-side permission bypasses.
+3. **Documentation:** Architectural decisions, API contract modifications, and core changes must be recorded in project documentation.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This Constitution supersedes all other practices and informal guidelines across both MiBeca repositories. Amendments require documentation, explicit team agreement, and a migration plan. Compliance is verified during code reviews, automated PR quality gates, and spec validation.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.1.0 | **Ratified**: 2026-03-30 | **Last Amended**: 2026-03-30

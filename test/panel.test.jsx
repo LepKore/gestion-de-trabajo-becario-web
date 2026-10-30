@@ -25,12 +25,25 @@ function metrica(label) {
 describe('resumen por rol', () => {
   it('resume progreso, postulaciones e historial para el becario', async () => {
     const usuario = { id: 'student', rol: 'BECARIO', activo: true, requiereCambioPassword: false, nombre: 'Ana', correo: 'ana@uni.edu', creadoEn: '2026-10-01T00:00:00Z', estudiante: { carrera: 'Sistemas', semestre: 4, metaMinutos: 120, codigo: '00731' } }
-    apiRequest.mockImplementation(async (_ruta, { query }) => ({ data: [], meta: { page: 1, pageSize: query.pageSize, total: query.estado === 'PENDIENTE' ? 2 : 5, totalPages: 1 } }))
+    apiRequest.mockImplementation(async (ruta, { query } = {}) => {
+      if (ruta === '/me/rating') return { data: { rating: null, trabajosRealizados: 2, evaluacionesConsideradas: 0, message: 'faltan realizar trabajos' } }
+      return { data: [], meta: { page: 1, pageSize: query.pageSize, total: query.estado === 'PENDIENTE' ? 2 : 5, totalPages: 1 } }
+    })
     montar(usuario)
     expect(await screen.findByText('Progreso estudiantil')).toBeInTheDocument()
     expect(screen.getByText('Todas tus solicitudes')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Consultar historial y horas' })).toHaveAttribute('href', '/historial')
+    expect(await screen.findByText('faltan realizar trabajos')).toBeInTheDocument()
     expect(apiRequest).toHaveBeenCalledWith('/me/applications', expect.objectContaining({ query: expect.objectContaining({ pageSize: 1 }) }))
+  })
+
+  it('muestra el rating general cuando existe', async () => {
+    apiRequest.mockImplementation(async ruta => ruta === '/me/rating'
+      ? { data: { rating: 4.5, trabajosRealizados: 10, evaluacionesConsideradas: 8, message: null } }
+      : { data: [], meta: { page: 1, pageSize: 1, total: 0, totalPages: 1 } })
+    montar({ id: 'student', rol: 'BECARIO', activo: true, requiereCambioPassword: false, nombre: 'Ana', correo: 'ana@uni.edu', creadoEn: '2026-10-01T00:00:00Z', estudiante: { carrera: 'Sistemas', semestre: 4, metaMinutos: 120, codigo: '00731' } })
+    expect(await screen.findByText('Rating general')).toBeInTheDocument()
+    expect(await screen.findByText('4.5 / 5')).toBeInTheDocument()
   })
 
   it('resume trabajos, postulaciones y cierres propios del encargado', async () => {

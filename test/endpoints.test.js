@@ -42,6 +42,7 @@ describe('endpoints de la API', () => {
       RUTAS.yo.panel,
       RUTAS.yo.progreso,
       RUTAS.yo.historial,
+      RUTAS.yo.rating,
     ]).toEqual([
       '/auth/me',
       '/auth/login',
@@ -55,6 +56,7 @@ describe('endpoints de la API', () => {
       '/me/dashboard',
       '/me/progress',
       '/me/history',
+      '/me/rating',
     ])
   })
 
@@ -69,6 +71,7 @@ describe('endpoints de la API', () => {
     expect(RUTAS.postulaciones.aceptar('a1')).toBe('/applications/a1/accept')
     expect(RUTAS.postulaciones.rechazar('a1')).toBe('/applications/a1/reject')
     expect(RUTAS.estudiantes.historial('e1')).toBe('/students/e1/history')
+    expect(RUTAS.postulaciones.evaluacion('a1')).toBe('/applications/a1/evaluation')
   })
 
   it('codifica los identificadores antes de interpolarlos', () => {

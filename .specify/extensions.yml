@@ -1,0 +1,19 @@
+hooks:
+  before_plan:
+    - extension: mibeca-backend-sync
+      command: "powershell -ExecutionPolicy Bypass -File .specify/scripts/powershell/verify-backend-dependency.ps1"
+      description: "Blocks web planning until the corresponding backend spec, tasks, and contract are complete."
+      prompt: "Run the backend dependency verification before planning web work."
+      optional: false
+  before_tasks:
+    - extension: mibeca-backend-sync
+      command: "powershell -ExecutionPolicy Bypass -File .specify/scripts/powershell/verify-backend-dependency.ps1"
+      description: "Blocks web task generation until the corresponding backend spec, tasks, and contract are complete."
+      prompt: "Run the backend dependency verification before generating web tasks."
+      optional: false
+  before_analyze:
+    - extension: mibeca-backend-sync
+      command: "powershell -ExecutionPolicy Bypass -File .specify/scripts/powershell/verify-backend-dependency.ps1"
+      description: "Checks that web analysis uses the completed backend contract."
+      prompt: "Run the backend dependency verification before analyzing web artifacts."
+      optional: false

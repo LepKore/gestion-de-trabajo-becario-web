@@ -1,6 +1,7 @@
 // `apiRequest` usa window.location.origin: este archivo necesita jsdom.
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, apiRequest, guardarCsrfToken } from '../src/lib/api.js'
+import { CRITERIOS_EVALUACION, ratingVisible, validarEvaluacion } from '../src/lib/trabajos.js'
 
 describe('cliente API', () => {
   beforeEach(() => {
@@ -104,5 +105,21 @@ describe('respuestas del contrato y errores', () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{"data":{}}', { status: 200 }))
     await apiRequest('/auth/me')
     expect(fetchMock.mock.calls[0][1].headers['X-CSRF-Token']).toBeUndefined()
+  })
+})
+
+describe('contrato de evaluaciones', () => {
+  it('define los cuatro criterios y formatea rating nulo', () => {
+    expect(CRITERIOS_EVALUACION).toHaveLength(4)
+    expect(ratingVisible(null)).toBe('Sin rating general')
+    expect(ratingVisible(4.5)).toBe('4.5 / 5')
+  })
+
+  it('valida valores enteros del uno al cinco', () => {
+    expect(validarEvaluacion(1)).toBe(true)
+    expect(validarEvaluacion(5)).toBe(true)
+    expect(validarEvaluacion(0)).toBe(false)
+    expect(validarEvaluacion(2.5)).toBe(false)
+    expect(validarEvaluacion('x')).toBe(false)
   })
 })

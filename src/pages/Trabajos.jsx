@@ -91,7 +91,7 @@ function DetalleContenido({ trabajo, recargar }) {
       {propio && <div className="row-actions">{proximo && trabajo.aceptados === 0 ? <Link className="button button--secondary" to={`/mis-trabajos/${trabajo.id}/editar`}>Editar trabajo</Link> : <p>Las condiciones solo se pueden editar antes del inicio y antes de la primera aceptación.</p>}<Link className="button button--secondary" to={`/postulaciones?trabajo=${trabajo.id}`}>Gestionar postulantes</Link></div>}
     </section>
     {propio && trabajo.estado === 'PUBLICADO' && trabajo.faseTemporal === 'FINALIZADO' && <FormularioCierre trabajo={trabajo} actualizarTrabajo={recargar} />}
-    {propio && trabajo.estado === 'CERRADO' && <AsistenciaCerrada trabajoId={trabajo.id} />}
+    {propio && trabajo.estado === 'CERRADO' && <AsistenciaCerrada trabajoId={trabajo.id} trabajoEstado={trabajo.estado} />}
   </>
 }
 function FiltroPostulacion({ estado, cambiar }) {

@@ -1,4 +1,4 @@
-// Contrato backend OpenAPI 1.4.0.
+// Contrato backend OpenAPI 1.6.0 (backend local, pendiente de commit).
 export const ZONA_UNIVERSITARIA = import.meta.env.VITE_TIME_ZONE || 'America/La_Paz'
 
 export function horas(minutos) {

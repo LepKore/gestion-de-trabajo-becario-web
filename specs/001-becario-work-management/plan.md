@@ -52,7 +52,7 @@ extienden antes de crear abstracciones nuevas.
   continúa primero en backend desde su última tarea terminada hasta desbloquearla.
 - PASS: cada slice debe incluir pruebas y conservar accesibilidad, seguridad y simplicidad.
 - PASS: backend terminó las tareas de evaluación y publicó los endpoints/esquemas de
-  calificación en `openapi.yaml` v1.4.0.
+  calificación en `openapi.yaml` v1.6.0.
 
 ## Project Structure
 

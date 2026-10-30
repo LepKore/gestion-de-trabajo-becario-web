@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { apiRequest } from '../src/lib/api.js'
 import { useAuth } from '../src/auth/useAuth.js'
@@ -44,6 +44,24 @@ describe('resumen por rol', () => {
     montar({ id: 'student', rol: 'BECARIO', activo: true, requiereCambioPassword: false, nombre: 'Ana', correo: 'ana@uni.edu', creadoEn: '2026-10-01T00:00:00Z', estudiante: { carrera: 'Sistemas', semestre: 4, metaMinutos: 120, codigo: '00731' } })
     expect(await screen.findByText('Rating general')).toBeInTheDocument()
     expect(await screen.findByText('4.5 / 5')).toBeInTheDocument()
+  })
+
+  it('permite reintentar el rating y muestra el mensaje contractual cuando no hay rating', async () => {
+    let intentosRating = 0
+    apiRequest.mockImplementation(async (ruta, { query } = {}) => {
+      if (ruta === '/me/rating') {
+        intentosRating += 1
+        if (intentosRating === 1) throw new Error('Sin conexión')
+        return { data: { rating: null, trabajosRealizados: 3, evaluacionesConsideradas: 0, message: 'faltan realizar trabajos' } }
+      }
+      return { data: [], meta: { page: 1, pageSize: query.pageSize, total: 0, totalPages: 1 } }
+    })
+    montar({ id: 'student', rol: 'BECARIO', activo: true, requiereCambioPassword: false, nombre: 'Ana', correo: 'ana@uni.edu', creadoEn: '2026-10-01T00:00:00Z', estudiante: { carrera: 'Sistemas', semestre: 4, metaMinutos: 120, codigo: '00731' } })
+
+    expect(await screen.findByText('No se pudo cargar este resumen: Sin conexión')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByText('faltan realizar trabajos')).toBeInTheDocument()
+    expect(intentosRating).toBe(2)
   })
 
   it('resume trabajos, postulaciones y cierres propios del encargado', async () => {

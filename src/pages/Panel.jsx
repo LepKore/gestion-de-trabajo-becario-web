@@ -9,7 +9,10 @@ import { ProgresoBecario } from './Control.jsx'
 
 function EstadoCarga({ recurso, children }) {
   if (recurso.cargando) return <p className="loading" role="status">Cargando resumen…</p>
-  if (recurso.error) return <Alert tipo="error">No se pudo cargar este resumen: {recurso.error}</Alert>
+  if (recurso.error) return <>
+    <Alert tipo="error">No se pudo cargar este resumen: {recurso.error}</Alert>
+    <button className="button button--secondary" type="button" onClick={recurso.recargar}>Reintentar</button>
+  </>
   return children(recurso.respuesta)
 }
 
@@ -22,7 +25,7 @@ function PanelBecario() {
     <section className="panel" aria-labelledby="titulo-rating-general">
       <header className="panel-head"><div><h2 id="titulo-rating-general">Rating general</h2><p>Promedio de evaluaciones disponibles de tus últimos trabajos realizados.</p></div></header>
       <EstadoCarga recurso={rating}>{({ data }) => data.rating === null
-        ? <Alert tipo="info">{data.message || 'faltan realizar trabajos'}</Alert>
+        ? <Alert tipo="info" conRol={false}>faltan realizar trabajos</Alert>
         : <Metric label="Rating general" value={ratingVisible(data.rating)} hint={`${data.evaluacionesConsideradas} evaluaciones consideradas en ${data.trabajosRealizados} trabajos realizados`} />}</EstadoCarga>
     </section>
     <section className="panel">

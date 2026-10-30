@@ -3,12 +3,13 @@
 ## Decision: backend primero y contrato canónico obligatorio
 
 - **Decisión**: backend terminó su spec, sus tareas de evaluación y el contrato técnico;
-  web consume ahora `openapi.yaml` v1.4.0 sin crear un contrato paralelo.
-- **Razón**: el contrato ya expone las capacidades necesarias y las pruebas backend cubren
-  autorización, inmutabilidad, cálculo y no modificación de horas.
-- **Alternativas consideradas**: implementar mocks de calificaciones en web (rechazada:
-  duplicaría el contrato); esperar otra revisión backend (innecesario: la revisión vigente
-  ya es consumible).
+  web consume ahora `openapi.yaml` v1.6.0 sin crear un contrato paralelo.
+- **Razón**: el contrato expone la creación inmutable y el rating agregado, con autorización
+  y respuestas verificables. Sin embargo, no expone la evaluación guardada en las lecturas
+  del encargado, por lo que no permite reconstruir `Evaluado` tras recargar.
+- **Alternativas consideradas**: implementar mocks o asumir un campo no documentado en web
+  (rechazado: duplicaría el contrato); solicitar al backend una lectura autorizada de la
+  evaluación antes de completar la visualización persistente.
 
 ## Decision: consumo del contrato existente
 

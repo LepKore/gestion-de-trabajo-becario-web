@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { apiRequest } from '../src/lib/api.js'
-import { Postulaciones } from '../src/pages/Postulaciones.jsx'
+import { AccionEvaluacion, FormularioEvaluacion, Postulaciones } from '../src/pages/Postulaciones.jsx'
 
 vi.mock('../src/lib/api.js', () => ({ apiRequest: vi.fn() }))
 
@@ -15,6 +15,14 @@ const lista = (data) => ({ data, meta: { page: 1, pageSize: 50, total: data.leng
 
 const biblioteca = trabajo('j1', 'Apoyo biblioteca')
 const fisica = trabajo('j2', 'Monitor de física')
+const asistente = (extra = {}) => ({
+  applicationId: 'a1', attended: true, awardedMinutes: 276,
+  student: { name: 'Ana', code: '00123', career: 'Sistemas' }, evaluation: null, ...extra,
+})
+const evaluacionGuardada = {
+  id: 'evaluation-1', postulacionId: 'a1', responsabilidad: 5, puntualidad: 4,
+  proactividad: 4, comunicacion: 4, promedio: 4.25, creadoEn: '2026-10-30T12:00:00Z',
+}
 
 function escenario(postulacionesDe) {
   apiRequest.mockImplementation(async (ruta, opciones) => {
@@ -123,5 +131,106 @@ describe('pantalla de postulaciones del encargado', () => {
     await screen.findAllByText('Nora')
     expect(screen.getAllByText('Sin datos').length).toBeGreaterThan(0)
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+  })
+})
+
+describe('evaluación de asistentes', () => {
+  it('valida que los cuatro criterios sean enteros entre 1 y 5', async () => {
+    const guardado = vi.fn()
+    render(<FormularioEvaluacion applicationId="a1" nombre="Ana" onGuardado={guardado} onCancelar={vi.fn()} />)
+    for (const etiqueta of ['Responsabilidad', 'Puntualidad', 'Proactividad', 'Comunicación']) {
+      const campo = screen.getByLabelText(etiqueta)
+      expect([...campo.options].slice(1).map((opcion) => opcion.value)).toEqual(['1', '2', '3', '4', '5'])
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
+    expect(await screen.findAllByText('Elige un valor entero entre 1 y 5.')).toHaveLength(4)
+    expect(apiRequest).not.toHaveBeenCalled()
+    expect(guardado).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['un estudiante ausente', asistente({ attended: false }), 'CERRADO'],
+    ['un trabajo todavía abierto', asistente(), 'PUBLICADO'],
+  ])('no ofrece evaluación para %s', (_caso, item, trabajoEstado) => {
+    render(<AccionEvaluacion item={item} trabajoEstado={trabajoEstado} />)
+    expect(screen.queryByRole('button', { name: /Evaluar a Ana/ })).not.toBeInTheDocument()
+    expect(apiRequest).not.toHaveBeenCalled()
+  })
+
+  it('envía los cuatro valores al endpoint canónico y muestra el promedio devuelto como inmutable', async () => {
+    apiRequest.mockResolvedValueOnce({ data: evaluacionGuardada })
+    render(<AccionEvaluacion item={asistente()} trabajoEstado="CERRADO" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Evaluar a Ana' }))
+    for (const [etiqueta, valor] of [['Responsabilidad', '5'], ['Puntualidad', '4'], ['Proactividad', '4'], ['Comunicación', '4']]) {
+      fireEvent.change(screen.getByLabelText(etiqueta), { target: { value: valor } })
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
+
+    expect(await screen.findByText('Evaluado')).toBeInTheDocument()
+    expect(screen.getByText('Promedio de evaluación:').parentElement).toHaveTextContent(/4[,.]25 \/ 5/)
+    expect(screen.queryByLabelText('Responsabilidad')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Editar|Eliminar|Evaluar a Ana/ })).not.toBeInTheDocument()
+    expect(apiRequest).toHaveBeenCalledWith('/applications/a1/evaluation', {
+      metodo: 'POST', cuerpo: { responsabilidad: 5, puntualidad: 4, proactividad: 4, comunicacion: 4 },
+    })
+  })
+
+  it('reconstruye el estado guardado al cargar la asistencia', () => {
+    render(<AccionEvaluacion item={asistente({ evaluation: evaluacionGuardada })} trabajoEstado="CERRADO" />)
+
+    expect(screen.getByText('Evaluado')).toBeInTheDocument()
+    expect(screen.getByText('Promedio de evaluación:').parentElement).toHaveTextContent(/4[,.]25 \/ 5/)
+    expect(screen.queryByRole('button', { name: 'Evaluar a Ana' })).not.toBeInTheDocument()
+    expect(apiRequest).not.toHaveBeenCalled()
+  })
+
+  it('tras un duplicado actualiza y muestra la evaluación ya guardada, sin sustituirla por el formulario', async () => {
+    const duplicado = Object.assign(new Error('La evaluación ya existe.'), { estado: 409, code: 'conflict' })
+    apiRequest.mockRejectedValueOnce(duplicado)
+    const onActualizar = vi.fn()
+    const vista = render(<AccionEvaluacion item={asistente()} trabajoEstado="CERRADO" onActualizar={onActualizar} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Evaluar a Ana' }))
+    for (const etiqueta of ['Responsabilidad', 'Puntualidad', 'Proactividad', 'Comunicación']) {
+      fireEvent.change(screen.getByLabelText(etiqueta), { target: { value: '4' } })
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
+
+    expect(await screen.findByText('La evaluación ya existe.')).toHaveAttribute('role', 'alert')
+    expect(screen.getByLabelText('Responsabilidad')).toHaveValue('4')
+    expect(onActualizar).toHaveBeenCalledOnce()
+
+    vista.rerender(<AccionEvaluacion item={asistente({ evaluation: evaluacionGuardada })} trabajoEstado="CERRADO" onActualizar={onActualizar} />)
+    expect(screen.getByText('Evaluado')).toBeInTheDocument()
+    expect(screen.getByText('Promedio de evaluación:').parentElement).toHaveTextContent(/4[,.]25 \/ 5/)
+    expect(screen.queryByLabelText('Responsabilidad')).not.toBeInTheDocument()
+  })
+
+  it('conserva valores tras un error de red y permite reintentar manualmente', async () => {
+    apiRequest.mockRejectedValueOnce(new Error('Sin conexión')).mockResolvedValueOnce({ data: evaluacionGuardada })
+    render(<AccionEvaluacion item={asistente()} trabajoEstado="CERRADO" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Evaluar a Ana' }))
+    for (const [etiqueta, valor] of [['Responsabilidad', '5'], ['Puntualidad', '4'], ['Proactividad', '4'], ['Comunicación', '4']]) {
+      fireEvent.change(screen.getByLabelText(etiqueta), { target: { value: valor } })
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
+    expect(await screen.findByText('Sin conexión')).toBeInTheDocument()
+    expect(screen.getByLabelText('Responsabilidad')).toHaveValue('5')
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar evaluación' }))
+    expect(await screen.findByText('Evaluado')).toBeInTheDocument()
+    expect(apiRequest).toHaveBeenCalledTimes(2)
+    expect(apiRequest.mock.calls[0]).toEqual(apiRequest.mock.calls[1])
+  })
+
+  it.each([400, 401, 403, 404, 409])('anuncia errores API %i y mantiene el formulario disponible', async (estado) => {
+    apiRequest.mockRejectedValueOnce(Object.assign(new Error(`Error ${estado}`), { estado }))
+    render(<AccionEvaluacion item={asistente()} trabajoEstado="CERRADO" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Evaluar a Ana' }))
+    for (const etiqueta of ['Responsabilidad', 'Puntualidad', 'Proactividad', 'Comunicación']) {
+      fireEvent.change(screen.getByLabelText(etiqueta), { target: { value: '3' } })
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
+    expect(await screen.findByText(`Error ${estado}`)).toHaveAttribute('role', 'alert')
+    expect(screen.getByRole('button', { name: 'Reintentar evaluación' })).toBeEnabled()
+    expect(screen.queryByText('Evaluado')).not.toBeInTheDocument()
   })
 })

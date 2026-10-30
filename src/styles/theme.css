@@ -58,6 +58,8 @@
   --color-outline-variant: #c6c5d2;
   --color-focus: #06175d;
   --color-backdrop: rgb(13 28 46 / 75%);
+  --color-evaluation-surface: #eff4ff;
+  --color-evaluation-outline: #c6c5d2;
 
   /* Estados */
   --color-error: #ba1a1a;

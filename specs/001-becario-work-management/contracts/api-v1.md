@@ -3,7 +3,7 @@
 ## Fuente canónica
 
 `gestion-de-trabajo-becario-backend/openapi.yaml`, actualmente verificado en revisión
-`1.4.0`. Este archivo resume reglas de consumo; no reemplaza ni duplica el OpenAPI.
+`1.6.0` (actualización local del backend, pendiente de commit). Este archivo resume reglas de consumo; no reemplaza ni duplica el OpenAPI.
 
 ## Capacidades disponibles
 
@@ -25,7 +25,7 @@
 
 ## Calificaciones disponibles
 
-El backend terminó la spec y publicó en `openapi.yaml` v1.4.0:
+El backend publicó en `openapi.yaml` v1.6.0:
 
 - `POST /applications/{id}/evaluation`: solo `ENCARGADO` propietario de un trabajo
   `CERRADO`, con postulación aceptada y asistencia confirmada. Requiere CSRF. Responde
@@ -39,3 +39,7 @@ El backend terminó la spec y publicó en `openapi.yaml` v1.4.0:
   `message` es `faltan realizar trabajos`.
 
 No existe edición ni eliminación de evaluaciones. Las evaluaciones no cambian horas.
+
+### Lectura autorizada de evaluaciones guardadas
+
+En v1.6.0, la asistencia de un trabajo cerrado y el historial del encargado incluyen `evaluation: Evaluacion | null`. Solo se devuelve al encargado propietario. Los historiales de becarios y las rutas administrativas no incluyen evaluaciones. Tras un `409` por duplicado, la interfaz vuelve a consultar la asistencia y muestra el promedio ya persistido.

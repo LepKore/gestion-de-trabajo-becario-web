@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { postulacionesApi } from '../api/endpoints.js'
-import { fechaVisible, horas, ZONA_UNIVERSITARIA } from '../lib/trabajos.js'
+import { CRITERIOS_EVALUACION, fechaVisible, horas, validarEvaluacion, ZONA_UNIVERSITARIA } from '../lib/trabajos.js'
 import { Alert, EmptyState, Field, Metric } from '../components/ui.jsx'
 
 const ESTADOS = ['PENDIENTE', 'ACEPTADA', 'RECHAZADA']
@@ -48,7 +48,7 @@ function EstadoPostulacion({ estado }) {
 }
 
 function ProgresoBeca({ estudiante }) {
-  // Una API anterior a 1.4.0 no envía el progreso: se dice, no se inventa.
+  // Una respuesta sin progreso no debe convertirse en cifras inventadas.
   if (estudiante.targetMinutes == null) return <span className="texto-sutil">Sin datos</span>
   const { nombre, semester, targetMinutes, accreditedMinutes, remainingMinutes } = estudiante
   return <div className="celda-beca">
@@ -61,6 +61,107 @@ function ProgresoBeca({ estudiante }) {
     <span className={`status ${remainingMinutes ? 'status--warning' : 'status--success'}`}>
       {remainingMinutes ? `Faltan ${horas(remainingMinutes)}` : 'Meta alcanzada'}
     </span>
+  </div>
+}
+
+function promedioVisible(valor) {
+  return new Intl.NumberFormat('es-BO', { maximumFractionDigits: 2 }).format(Number(valor))
+}
+
+export function FormularioEvaluacion({ applicationId, nombre, onGuardado, onDuplicado, onCancelar }) {
+  const [valores, setValores] = useState(() => Object.fromEntries(CRITERIOS_EVALUACION.map(([campo]) => [campo, ''])))
+  const [errores, setErrores] = useState({})
+  const [errorApi, setErrorApi] = useState('')
+  const [ocupado, setOcupado] = useState(false)
+
+  async function guardar(evento) {
+    evento.preventDefault()
+    const invalidos = Object.fromEntries(CRITERIOS_EVALUACION
+      .filter(([campo]) => !validarEvaluacion(valores[campo]))
+      .map(([campo]) => [campo, 'Elige un valor entero entre 1 y 5.']))
+    setErrores(invalidos)
+    if (Object.keys(invalidos).length > 0) return
+
+    const cuerpo = Object.fromEntries(CRITERIOS_EVALUACION.map(([campo]) => [campo, Number(valores[campo])]))
+    setOcupado(true)
+    setErrorApi('')
+    try {
+      const respuesta = await postulacionesApi.crearEvaluacion(applicationId, cuerpo)
+      if (!respuesta?.data) throw new Error('La API no devolvió la evaluación guardada.')
+      onGuardado(respuesta.data)
+    } catch (fallo) {
+      // Se conservan los valores para que el encargado pueda reintentar o corregirlos.
+      setErrorApi(fallo.message)
+      if (fallo.estado === 409) onDuplicado?.()
+    } finally {
+      setOcupado(false)
+    }
+  }
+
+  function cambiar(campo, valor) {
+    setValores((actuales) => ({ ...actuales, [campo]: valor }))
+    setErrores((actuales) => ({ ...actuales, [campo]: '' }))
+    setErrorApi('')
+  }
+
+  return <form className="evaluation-form" aria-label={`Evaluación de ${nombre}`} onSubmit={guardar} noValidate aria-busy={ocupado}>
+    <fieldset className="evaluation-fields" disabled={ocupado}>
+      <legend>Evalúa el trabajo de {nombre}</legend>
+      {CRITERIOS_EVALUACION.map(([campo, etiqueta]) => <Field key={campo} label={etiqueta} error={errores[campo]} hint="Selecciona un entero del 1 al 5.">
+        {(props) => <select {...props} name={campo} required value={valores[campo]} onChange={(evento) => cambiar(campo, evento.target.value)}>
+          <option value="">Selecciona una calificación</option>
+          {[1, 2, 3, 4, 5].map((valor) => <option key={valor} value={valor}>{valor}</option>)}
+        </select>}
+      </Field>)}
+    </fieldset>
+    {errorApi && <Alert tipo="error">{errorApi}</Alert>}
+    <div className="row-actions">
+      <button className="button button--primary" type="submit" disabled={ocupado}>{ocupado ? 'Guardando…' : errorApi ? 'Reintentar evaluación' : 'Guardar evaluación'}</button>
+      <button className="button button--secondary" type="button" disabled={ocupado} onClick={onCancelar}>Cancelar</button>
+    </div>
+  </form>
+}
+
+export function AccionEvaluacion({ item, trabajoEstado, onActualizar }) {
+  const id = useId()
+  const [abierta, setAbierta] = useState(false)
+  const [evaluacionLocal, setEvaluacionLocal] = useState(null)
+  const evaluacion = item.evaluation ?? evaluacionLocal
+  const tieneEstadoEvaluacion = Object.prototype.hasOwnProperty.call(item, 'evaluation')
+  const elegible = trabajoEstado === 'CERRADO' && item.attended === true
+
+  if (!elegible) return <span className="texto-sutil">No corresponde</span>
+  if (!tieneEstadoEvaluacion) return <span className="texto-sutil" role="status">No se pudo consultar el estado de la evaluación.</span>
+  if (evaluacion) return <div className="evaluation-saved" role="status">
+    <span className="status status--success">Evaluado</span>
+    <span><strong>Promedio de evaluación:</strong> {promedioVisible(evaluacion.promedio)} / 5</span>
+  </div>
+  return <div>
+    <button className="button button--secondary" type="button" aria-expanded={abierta} aria-controls={`${id}-formulario`} aria-label={`${abierta ? 'Ocultar evaluación de' : 'Evaluar a'} ${item.student.name}`} onClick={() => setAbierta((actual) => !actual)}>
+      {abierta ? 'Ocultar evaluación' : 'Evaluar'}
+    </button>
+    <div id={`${id}-formulario`}>
+      {abierta && <FormularioEvaluacion applicationId={item.applicationId} nombre={item.student.name}
+        onGuardado={(guardada) => { setEvaluacionLocal(guardada); setAbierta(false) }}
+        onDuplicado={onActualizar}
+        onCancelar={() => setAbierta(false)} />}
+    </div>
+  </div>
+}
+
+export function ListaAsistenciaCerrada({ attendance, trabajoEstado, onActualizar }) {
+  if (!attendance.length) return <EmptyState title="Sin asistentes">No hubo estudiantes aceptados para este trabajo.</EmptyState>
+  return <div className="attendance-records">
+    {attendance.map((item) => <article className="attendance-record" key={item.applicationId}>
+      <h3>{item.student.name}</h3>
+      <dl className="attendance-facts">
+        <div><dt>Código</dt><dd>{item.student.code}</dd></div>
+        <div><dt>Carrera</dt><dd>{item.student.career}</dd></div>
+        <div><dt>Asistencia</dt><dd><span className={`status ${item.attended ? 'status--success' : 'status--muted'}`}>{item.attended ? 'Asistió' : 'No asistió'}</span></dd></div>
+        <div><dt>Horas acreditadas</dt><dd>{horas(item.awardedMinutes)}</dd></div>
+      </dl>
+      <div className="attendance-evaluation"><span className="attendance-evaluation__label">Evaluación</span><AccionEvaluacion item={item} trabajoEstado={trabajoEstado} onActualizar={onActualizar} /></div>
+    </article>)}
   </div>
 }
 

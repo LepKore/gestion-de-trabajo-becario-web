@@ -12,7 +12,7 @@
 
 - [x] CHK001 Are the responsibilities and permitted actions of Becario, Encargado, and Administrador explicitly distinguished? [Completeness, Spec §User Scenarios & Testing]
 - [x] CHK002 Are requirements defined for discovery, application, acceptance/rejection, closure, attendance, hour accreditation, evaluation, and administrative supervision? [Completeness, Spec §FR-001–FR-020]
-- [x] CHK003 Are the frontend requirements explicitly tied to the completed backend contract revision `openapi.yaml` v1.4.0? [Dependency, Plan §Technical Context]
+- [x] CHK003 Are the frontend requirements explicitly tied to the completed backend contract revision `openapi.yaml` v1.6.0? [Dependency, Plan §Technical Context]
 - [x] CHK004 Are requirements defined for both the primary data states and the absence of data, including no jobs, no applications, no history, and no rating? [Coverage, Spec §Edge Cases]
 
 ## Requirement Clarity

@@ -1,6 +1,6 @@
 // Endpoints de la API de MiBeca en un único lugar.
 //
-// Contrato de referencia: `backend/openapi.yaml`, revisión 1.4.0 (commit 8ed9226).
+// Contrato de referencia: `backend/openapi.yaml`, revisión 1.6.0 (backend local, pendiente de commit).
 // La sesión vive en una cookie HttpOnly; el token CSRF, las cookies y el
 // manejo de errores son responsabilidad de `src/lib/api.js`.
 //

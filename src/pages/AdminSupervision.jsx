@@ -7,6 +7,9 @@ import { RUTAS } from '../api/endpoints.js'
 function EstadoCarga({ recurso, children }) {
   if (recurso.cargando) return <p className="loading" role="status">Cargando…</p>
   if (recurso.error) return <><Alert tipo="error">{recurso.error}</Alert><button className="button button--secondary" type="button" onClick={recurso.recargar}>Reintentar</button></>
+  if (!recurso.respuesta?.meta || !Array.isArray(recurso.respuesta?.data)) {
+    return <><Alert tipo="error">No se pudo verificar la paginación de los resultados.</Alert><button className="button button--secondary" type="button" onClick={recurso.recargar}>Reintentar</button></>
+  }
   return children(recurso.respuesta)
 }
 
@@ -78,14 +81,15 @@ export function AdminSupervision() {
       <header className="panel-head"><h2 id="resultados-estudiantes">Resultados</h2></header>
       <div aria-busy={recurso.cargando}>
         <EstadoCarga recurso={recurso}>{({ data, meta }) => <>
-          {data.length === 0 ? <EmptyState title="Sin estudiantes para mostrar">Prueba otros filtros; el progreso solo cuenta horas acreditadas al cierre.</EmptyState> : <div className="table-scroll">
+          {data.length === 0 ? <EmptyState title="Sin estudiantes para mostrar">Prueba otros filtros; el progreso solo cuenta horas acreditadas al cierre.</EmptyState> : <div className="table-scroll" role="region" aria-label="Progreso de estudiantes" tabIndex={0}>
             <table>
-              <thead><tr><th scope="col">Estudiante</th><th scope="col">Meta</th><th scope="col">Acreditadas</th><th scope="col">Pendientes</th><th scope="col">Excedentes</th><th scope="col">Historial</th></tr></thead>
+              <thead><tr><th scope="col">Estudiante</th><th scope="col">Meta</th><th scope="col">Acreditadas</th><th scope="col">Pendientes</th><th scope="col">Excedentes</th><th scope="col">Cumplimiento</th><th scope="col">Historial</th></tr></thead>
               <tbody>{data.map(estudiante => <tr key={estudiante.id}>
                 <th scope="row"><span>{estudiante.name}</span><small className="table-subtext">{estudiante.code} · {estudiante.career} · sem. {estudiante.semester}</small></th>
                 <td>{horas(estudiante.targetMinutes)}</td><td>{horas(estudiante.accreditedMinutes)}</td>
                 <td><span className={`status ${estudiante.remainingMinutes ? 'status--warning' : 'status--success'}`}>{horas(estudiante.remainingMinutes)}</span></td>
                 <td>{horas(estudiante.excessMinutes)}</td>
+                <td>{estudiante.remainingMinutes > 0 ? 'Pendiente' : estudiante.excessMinutes > 0 ? 'Meta excedida' : 'Meta completada'}</td>
                 <td><button className="button button--secondary" type="button" onClick={() => setSeleccionado(estudiante)}>Ver historial</button></td>
               </tr>)}</tbody>
             </table>

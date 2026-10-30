@@ -117,14 +117,14 @@ respuesta y la interfaz no muestran campos de evaluación.
 
 ### Tests for User Story 3
 
-- [ ] T024 [P] [US3] Add admin compliance field and pagination tests for `students/progress` in `test/admin-supervision.test.jsx`
-- [ ] T025 [P] [US3] Add regression tests proving administrator views do not render rating or evaluation fields in `test/admin-supervision.test.jsx`
+- [X] T024 [P] [US3] Add admin compliance field and pagination tests for `students/progress` in `test/admin-supervision.test.jsx`
+- [X] T025 [P] [US3] Add regression tests proving administrator views do not render rating or evaluation fields in `test/admin-supervision.test.jsx`
 
 ### Implementation for User Story 3
 
-- [ ] T026 [US3] Consume the canonical administrative progress and history endpoints with pagination metadata in `src/pages/AdminSupervision.jsx`
-- [ ] T027 [US3] Render completed, pending, and excess-minute states using backend progress fields without displaying evaluations in `src/pages/AdminSupervision.jsx`
-- [ ] T028 [US3] Add accessible filters, empty states, loading states, API errors, and responsive table behavior in `src/pages/AdminSupervision.jsx` and `src/styles/theme.css`
+- [X] T026 [US3] Consume the canonical administrative progress and history endpoints with pagination metadata in `src/pages/AdminSupervision.jsx`
+- [X] T027 [US3] Render completed, pending, and excess-minute states using backend progress fields without displaying evaluations in `src/pages/AdminSupervision.jsx`
+- [X] T028 [US3] Add accessible filters, empty states, loading states, API errors, and responsive table behavior in `src/pages/AdminSupervision.jsx` and `src/styles/theme.css`
 
 **Checkpoint**: All three stories are independently functional and administrator views exclude evaluations.
 
@@ -134,12 +134,12 @@ respuesta y la interfaz no muestran campos de evaluación.
 
 **Purpose**: Validate the complete synchronized frontend integration.
 
-- [ ] T029 [P] Run `npm test` and fix regressions in `test/`
-- [ ] T030 [P] Run `npm run lint` and resolve frontend lint issues without suppressions in `src/`
-- [ ] T031 [P] Run `npm run build` and verify the production bundle in `package.json` and `dist/`
-- [ ] T032 [P] Execute every scenario in `specs/001-becario-work-management/quickstart.md` against backend `openapi.yaml` v1.6.0 and record results in `specs/001-becario-work-management/quickstart.md`
-- [ ] T033 [P] Run the frontend accessibility and contract audit over changed files using the repository audit tooling in `src/` and `test/`
-- [ ] T034 Update `AI_CONTEXT.md` with the verified frontend/backend contract revision and completed feature status in `AI_CONTEXT.md`
+- [X] T029 [P] Run `npm test` and fix regressions in `test/`
+- [X] T030 [P] Run `npm run lint` and resolve frontend lint issues without suppressions in `src/`
+- [X] T031 [P] Run `npm run build` and verify the production bundle in `package.json` and `dist/`
+- [X] T032 [P] Execute every scenario in `specs/001-becario-work-management/quickstart.md` against backend `openapi.yaml` v1.6.0 and record results in `specs/001-becario-work-management/quickstart.md`
+- [X] T033 [P] Run the frontend accessibility and contract audit over changed files using the repository audit tooling in `src/` and `test/`
+- [X] T034 Update `AI_CONTEXT.md` with the verified frontend/backend contract revision and completed feature status in `AI_CONTEXT.md`
 
 ---
 

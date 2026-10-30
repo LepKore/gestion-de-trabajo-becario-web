@@ -60,3 +60,62 @@ describe('supervisión administrativa de progreso', () => {
     await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('/students/progress', expect.objectContaining({ query: expect.objectContaining({ q: '00731', conHorasPendientes: 'false' }) })))
   })
 })
+
+describe('cumplimiento y estados administrativos', () => {
+  it('distingue pendientes, meta completada y excedida sin renderizar evaluaciones', async () => {
+    apiRequest.mockResolvedValue({ data: [
+      { ...estudiante, rating: 5, evaluation: { promedio: 5 } },
+      { ...estudiante, id: 'completo', name: 'Completo', accreditedMinutes: 120, remainingMinutes: 0 },
+      { ...estudiante, id: 'excedido', name: 'Excedido', accreditedMinutes: 180, remainingMinutes: 0, excessMinutes: 60 },
+    ], meta: { page: 1, totalPages: 1, total: 3 } })
+    montar()
+    expect(await screen.findByText('Meta completada')).toBeInTheDocument()
+    expect(screen.getByText('Meta excedida')).toBeInTheDocument()
+    expect(screen.getByText('Pendiente')).toBeInTheDocument()
+    expect(screen.queryByText(/calificación|evaluación|promedio|rating/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Progreso de estudiantes' })).toHaveAttribute('tabindex', '0')
+  })
+
+  it('pagina estudiantes y restablece la página al cambiar filtros', async () => {
+    apiRequest.mockImplementation(async (_ruta, { query }) => ({ data: [estudiante], meta: { page: query.page, pageSize: 20, total: 21, totalPages: 2 } }))
+    montar()
+    await screen.findByText('Ana Pérez')
+    expect(screen.getByRole('button', { name: 'Anterior' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }))
+    await screen.findByText('Página 2 de 2 · 21 estudiantes')
+    expect(screen.getByRole('button', { name: 'Siguiente' })).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Horas pendientes'), { target: { value: '' } })
+    await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('/students/progress', { query: { q: '', conHorasPendientes: '', page: 1, pageSize: 20 } }))
+  })
+
+  it('pagina el historial sin mostrar datos de evaluación', async () => {
+    apiRequest.mockImplementation(async (ruta, { query }) => ruta === '/students/progress'
+      ? { data: [estudiante], meta: { page: 1, totalPages: 1, total: 1 } }
+      : { ...historia, data: historia.data.map(item => ({ ...item, evaluation: { promedio: 5 } })), meta: { page: query.page, totalPages: 2, total: 11 } })
+    montar()
+    await screen.findByText('Ana Pérez')
+    fireEvent.click(screen.getByRole('button', { name: 'Ver historial' }))
+    await screen.findByText('Apoyo de biblioteca')
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }))
+    await screen.findByText('Página 2 de 2 · 11 registros')
+    expect(screen.queryByText(/evaluación|promedio|rating/i)).not.toBeInTheDocument()
+  })
+
+  it('anuncia carga, muestra vacío y permite reintentar un error', async () => {
+    let reject
+    apiRequest.mockImplementationOnce(() => new Promise((_resolve, fail) => { reject = fail }))
+    montar()
+    expect(screen.getByRole('status')).toHaveTextContent('Cargando')
+    reject(new Error('Sin conexión'))
+    expect(await screen.findByText('Sin conexión')).toBeInTheDocument()
+    apiRequest.mockResolvedValue({ data: [], meta: { page: 1, totalPages: 0, total: 0 } })
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByText('Sin estudiantes para mostrar')).toBeInTheDocument()
+  })
+
+  it('rechaza una respuesta sin metadatos en lugar de ocultar páginas', async () => {
+    apiRequest.mockResolvedValue({ data: [estudiante] })
+    montar()
+    expect(await screen.findByText('No se pudo verificar la paginación de los resultados.')).toBeInTheDocument()
+  })
+})
